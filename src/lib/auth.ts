@@ -1,5 +1,6 @@
 import { dutySiteId } from './roleHome.ts'
-import { fetchSnapshot, hydrateSnapshot, loginDemoRequest, loginRequest, openQueryStream } from './api.ts'
+import { hydrateSnapshot } from './api.ts'
+import { buildLocalSnapshot, mockLogin } from './mockQuery.ts'
 
 const KEY = 't-arch-session'
 const TOKEN_KEY = 't-arch-token'
@@ -63,30 +64,20 @@ export function setSession(session: Session | null) {
   emit()
 }
 
-async function establish(result: { token: string; email: string; name: string; role: Session['role'] }): Promise<Session> {
+function establish(result: { token: string; email: string; name: string; role: Session['role'] }): Session {
   setToken(result.token)
-  try {
-    const snapshot = await fetchSnapshot()
-    hydrateSnapshot(snapshot)
-  } catch (error) {
-    setToken(null)
-    sessionStorage.removeItem(KEY)
-    throw error
-  }
+  hydrateSnapshot(buildLocalSnapshot())
   const session = { email: result.email, name: result.name, role: result.role }
   setSession(session)
   return session
 }
 
-export async function signIn(email: string, password: string): Promise<Session | null> {
-  if (!password.trim()) {
-    return establish(await loginDemoRequest(email))
-  }
-  return establish(await loginRequest(email, password))
+export async function signIn(email: string, _password: string): Promise<Session> {
+  return establish(mockLogin(email))
 }
 
 export async function signInDemo(email: string): Promise<Session> {
-  return establish(await loginDemoRequest(email))
+  return establish(mockLogin(email))
 }
 
 let logoutAt = 0
@@ -116,16 +107,10 @@ export function subscribeAuth(onChange: () => void) {
 export async function restoreSession(): Promise<Session | null> {
   const session = getSession()
   if (!session || !getToken()) return null
-  try {
-    const snapshot = await fetchSnapshot()
-    hydrateSnapshot(snapshot)
-    return session
-  } catch {
-    signOut()
-    return null
-  }
+  hydrateSnapshot(buildLocalSnapshot())
+  return session
 }
 
-export function watchStream(onTick: () => void): () => void {
-  return openQueryStream(onTick)
+export function watchStream(_onTick: () => void): () => void {
+  return () => {}
 }

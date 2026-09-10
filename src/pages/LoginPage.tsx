@@ -1,14 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { LoginPreview } from '../components/LoginPreview.tsx'
-import { fetchAccounts, type AuthAccount } from '../lib/api.ts'
 import { homePath, isLogoutRedirect, safeNext, signIn, signInDemo } from '../lib/auth.ts'
+import { MOCK_ACCOUNTS } from '../lib/mockQuery.ts'
 import { useAuth } from '../lib/useAuth.ts'
 import { ROLE_LABEL } from '../lib/format.ts'
-
-const AUTO_LOGIN = import.meta.env.DEV
-  ? String(import.meta.env.VITE_AUTO_LOGIN ?? '').trim()
-  : ''
 
 export function LoginPage() {
   const session = useAuth()
@@ -20,29 +16,15 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
-  const [accounts, setAccounts] = useState<AuthAccount[]>([])
-  const [accountsError, setAccountsError] = useState('')
 
-  const [autoPending, setAutoPending] = useState(AUTO_LOGIN !== '' && !isLogoutRedirect())
-
-  useEffect(() => {
-    fetchAccounts()
-      .then((list) => {
-        setAccounts(list)
-        setAccountsError('')
-      })
-      .catch((err: unknown) => {
-        setAccounts([])
-        setAccountsError(err instanceof Error ? err.message : '조회 API에 연결하지 못했습니다.')
-      })
-  }, [])
+  const [autoPending, setAutoPending] = useState(!isLogoutRedirect())
 
   useEffect(() => {
     if (!autoPending) return
     let cancelled = false
     void (async () => {
       try {
-        const signed = await signInDemo(AUTO_LOGIN)
+        const signed = await signInDemo(MOCK_ACCOUNTS[0].email)
         if (cancelled) return
         navigate(next ?? homePath(signed.role), { replace: true })
       } catch {
@@ -64,10 +46,6 @@ export function LoginPage() {
     setError('')
     try {
       const signed = await signIn(email, password)
-      if (!signed) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.')
-        return
-      }
       navigate(next ?? homePath(signed.role), { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다.')
@@ -90,10 +68,10 @@ export function LoginPage() {
           <h1>로그인</h1>
           <p className="login-lede">
             {autoPending
-              ? '개발 자동 로그인으로 들어가는 중입니다.'
+              ? '목업으로 들어가는 중입니다.'
               : expired
-                ? '세션이 만료되었습니다. 다시 로그인하십시오.'
-                : '조회 전용입니다. 설비 제어·스케줄 변경은 없습니다.'}
+                ? '세션이 만료되었습니다. 역할을 고르면 바로 들어갑니다.'
+                : '목업입니다. 비밀번호는 확인하지 않습니다.'}
           </p>
           <form onSubmit={onSubmit}>
             <label>
@@ -124,16 +102,12 @@ export function LoginPage() {
             </label>
             {error ? <p className="login-error" role="alert">{error}</p> : null}
             <button className="login-submit" type="submit" disabled={pending || autoPending}>
-              {pending || autoPending ? '조회 API 연결 중' : '로그인'}
+              {pending || autoPending ? '들어가는 중' : '로그인'}
             </button>
           </form>
           <div className="login-accounts">
-            {accountsError
-              ? <p className="login-error" role="alert">{accountsError}</p>
-              : accounts.length === 0
-                ? <p className="kpi-meta">데모 계정이 없습니다. 이메일과 비밀번호로 들어가십시오.</p>
-                : <p className="kpi-meta">조회 전용 데모. 계정을 누르면 바로 들어갑니다.</p>}
-            {accounts.map((account) => (
+            <p className="kpi-meta">목업. 역할을 누르면 바로 들어갑니다.</p>
+            {MOCK_ACCOUNTS.map((account) => (
               <button
                 key={account.email}
                 type="button"

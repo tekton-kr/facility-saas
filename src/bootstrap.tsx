@@ -22,7 +22,7 @@ export function Bootstrap({ children }: { children: ReactNode }) {
   if (state === 'wait') {
     return (
       <div className="boot-wait">
-        <p>조회 API에 연결하는 중입니다.</p>
+        <p>목업 데이터를 불러오는 중입니다.</p>
       </div>
     )
   }
