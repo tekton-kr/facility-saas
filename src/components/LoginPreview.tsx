@@ -38,7 +38,6 @@ export function LoginPreview() {
       <div className="login-stage">
         <figure className="login-stage-photo">
           <img src="/login-plant.jpg" alt="" />
-          <figcaption>하남 본사 · {arrived ? '2층' : '전기실'}</figcaption>
         </figure>
         <div className="login-window">
           <div className="login-window-bar">
@@ -80,6 +79,10 @@ export function LoginPreview() {
           <strong>1.2<b>백만원</b></strong>
           <small className="login-float-note">요금제·계수 가정. 보장이 아님</small>
         </div>
+        <p className="login-caption">
+          하남 본사 · {arrived ? '2층' : '전기실'}
+          <span>실측 수신 {clock}</span>
+        </p>
       </div>
     </aside>
   )

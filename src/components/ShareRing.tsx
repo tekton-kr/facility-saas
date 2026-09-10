@@ -16,12 +16,14 @@ export function ShareRing({ title, items }: Props) {
   const total = parts.reduce((sum, item) => sum + item.value, 0)
   if (parts.length < 2 || total <= 0) return null
 
-  let offset = 0
   const slices = parts.map((item, index) => {
-    const length = (item.value / total) * CIRCUMFERENCE
-    const slice = { item, color: COLORS[index % COLORS.length], dash: length, offset }
-    offset += length
-    return slice
+    const before = parts.slice(0, index).reduce((sum, prev) => sum + prev.value, 0)
+    return {
+      item,
+      color: COLORS[index % COLORS.length],
+      dash: (item.value / total) * CIRCUMFERENCE,
+      offset: (before / total) * CIRCUMFERENCE,
+    }
   })
 
   return (

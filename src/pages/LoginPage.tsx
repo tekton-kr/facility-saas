@@ -21,13 +21,20 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
   const [accounts, setAccounts] = useState<AuthAccount[]>([])
+  const [accountsError, setAccountsError] = useState('')
 
   const [autoPending, setAutoPending] = useState(AUTO_LOGIN !== '' && !isLogoutRedirect())
 
   useEffect(() => {
     fetchAccounts()
-      .then(setAccounts)
-      .catch(() => setAccounts([]))
+      .then((list) => {
+        setAccounts(list)
+        setAccountsError('')
+      })
+      .catch((err: unknown) => {
+        setAccounts([])
+        setAccountsError(err instanceof Error ? err.message : '조회 API에 연결하지 못했습니다.')
+      })
   }, [])
 
   useEffect(() => {
@@ -121,7 +128,11 @@ export function LoginPage() {
             </button>
           </form>
           <div className="login-accounts">
-            <p className="kpi-meta">조회 전용 데모. 계정을 누르면 바로 들어갑니다.</p>
+            {accountsError
+              ? <p className="login-error" role="alert">{accountsError}</p>
+              : accounts.length === 0
+                ? <p className="kpi-meta">데모 계정이 없습니다. 이메일과 비밀번호로 들어가십시오.</p>
+                : <p className="kpi-meta">조회 전용 데모. 계정을 누르면 바로 들어갑니다.</p>}
             {accounts.map((account) => (
               <button
                 key={account.email}

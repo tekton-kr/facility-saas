@@ -15,11 +15,14 @@ export function AppShell() {
   const compact = useCompact()
   const [treeOpen, setTreeOpen] = useState(false)
   const [alarmCollapsed, setAlarmCollapsed] = useState(false)
-  const [commandOpen, setCommandOpen] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(palette)
 
-  useEffect(() => {
+  // ?palette=1 로 들어오거나 그 링크로 이동했을 때만 연다. 닫은 뒤 다시 열지 않는다.
+  const [seenPalette, setSeenPalette] = useState(palette)
+  if (palette !== seenPalette) {
+    setSeenPalette(palette)
     if (palette) setCommandOpen(true)
-  }, [palette])
+  }
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

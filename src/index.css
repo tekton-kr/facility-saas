@@ -1313,17 +1313,6 @@ tbody tr.is-warning {
   background: var(--status-info);
 }
 
-.boot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 100vh;
-  color: var(--text-disabled);
-  font-size: 13px;
-}
-
 .portfolio-line {
   display: flex;
   align-items: center;
@@ -1869,14 +1858,30 @@ tbody tr.is-warning {
   object-fit: cover;
 }
 
-.login-stage-photo figcaption {
+.login-caption {
   position: absolute;
-  right: 48px;
-  bottom: 28px;
-  color: #f3f4f6;
-  font-size: 11px;
+  left: 0;
+  bottom: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(17 24 39 / 10%);
+  font-size: 12px;
   font-weight: 650;
-  text-shadow: 0 1px 6px rgb(17 24 39 / 60%);
+}
+
+.login-caption span {
+  color: var(--text-disabled);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .login-window {
@@ -2359,11 +2364,22 @@ tbody tr.is-warning {
 
 .boot-wait,
 .boot-error {
-  min-height: 100%;
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 48px 24px;
   color: var(--text-secondary);
+}
+
+.boot-error .panel {
+  width: min(440px, 100%);
+}
+
+.boot-error h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
 }
 
 .lobby-grid {

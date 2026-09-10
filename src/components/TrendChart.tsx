@@ -1,71 +1,16 @@
-import { useMemo } from 'react'
-import EchartsReactCore from 'echarts-for-react/lib/core'
-import { LineChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
-import * as echarts from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import type { EChartsOption } from 'echarts'
+import { lazy, Suspense } from 'react'
 
-echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
-
-const ReactEChartsCore = (
-  EchartsReactCore as unknown as { default?: typeof EchartsReactCore }
-).default ?? EchartsReactCore
+// ECharts는 초기 번들의 대부분을 차지한다. 추세가 실제로 그려지는 화면에서만 내려받는다.
+const TrendChartCanvas = lazy(() =>
+  import('./TrendChartCanvas.tsx').then((module) => ({ default: module.TrendChartCanvas })),
+)
 
 type Props = {
   values: number[] | null
   label: string
 }
 
-function token(name: string, fallback: string): string {
-  if (typeof document === 'undefined') return fallback
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-  return value || fallback
-}
-
 export function TrendChart({ values, label }: Props) {
-  const option = useMemo<EChartsOption>(() => {
-    const line = token('--chart-1', '#2563eb')
-    const grid = token('--chart-grid', '#eef0f3')
-    const text = token('--text-secondary', '#6b7280')
-    const series = values ?? []
-
-    return {
-      animation: false,
-      grid: { left: 44, right: 12, top: 16, bottom: 28 },
-      tooltip: {
-        trigger: 'axis',
-        borderWidth: 1,
-        borderColor: token('--border', '#e5e7eb'),
-        backgroundColor: token('--surface', '#ffffff'),
-        textStyle: { color: token('--text', '#111827'), fontSize: 12 },
-      },
-      xAxis: {
-        type: 'category',
-        data: series.map((_, index) => String(index + 1)),
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: grid } },
-        axisTick: { show: false },
-        axisLabel: { color: text, fontSize: 11 },
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { color: grid } },
-        axisLabel: { color: text, fontSize: 11 },
-      },
-      series: [
-        {
-          type: 'line',
-          name: label,
-          data: series,
-          showSymbol: false,
-          lineStyle: { width: 2, color: line },
-          itemStyle: { color: line },
-        },
-      ],
-    }
-  }, [label, values])
-
   if (!values || values.length === 0) {
     return (
       <div className="chart" role="img" aria-label={`${label} 데이터 없음`}>
@@ -76,13 +21,9 @@ export function TrendChart({ values, label }: Props) {
 
   return (
     <div className="chart" role="img" aria-label={label}>
-      <ReactEChartsCore
-        echarts={echarts}
-        option={option}
-        style={{ height: 220, width: '100%' }}
-        notMerge
-        lazyUpdate
-      />
+      <Suspense fallback={<div className="chart-empty">추세 불러오는 중</div>}>
+        <TrendChartCanvas values={values} label={label} />
+      </Suspense>
     </div>
   )
 }
