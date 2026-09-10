@@ -34,10 +34,10 @@ export function DomainAppPage() {
 
   if (site && !siteHasApp(site, app)) {
     return (
-      <div className="panel">
+      <div className="empty">
         <h1>{site.name} · {APP_LABEL[app]}</h1>
-        <p className="kpi-meta">이 현장에 해당 앱 데이터가 없습니다. 카탈로그에 계통을 넣으면 같은 화면이 채워집니다.</p>
-        <p><Link to={`/apps/${app}/sites/${site.id}${search}`}>현장으로</Link></p>
+        <p>이 현장에 해당 앱 데이터가 없습니다. 0으로 채우지 않습니다. 카탈로그에 계통을 넣으면 같은 화면이 채워집니다.</p>
+        <p><Link to={`/apps/${app}${search}`}>포트폴리오로</Link></p>
       </div>
     )
   }

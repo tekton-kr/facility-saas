@@ -2,17 +2,19 @@ import { Link } from 'react-router-dom'
 import { DomainBoard } from './DomainBoard.tsx'
 import { InsightChips } from './InsightChips.tsx'
 import { KpiRow } from './KpiRow.tsx'
+import { SiteCards } from './SiteCards.tsx'
 import { WorkQueue } from './WorkQueue.tsx'
 import { getSite } from '../lib/catalog.ts'
 import { contractForSite, daysUntil, packagesForScope } from '../lib/field.ts'
 import { APP_LABEL, formatDateTime, KIND_ALARM_LABEL, KIND_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
 import { insightsForScope } from '../lib/portfolio.ts'
-import { execKpis } from '../lib/roleHome.ts'
+import { exceptionSiteCards, execKpis } from '../lib/roleHome.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 
 export function ExecBrief() {
-  const { app, siteId, range, search, role } = useScope()
+  const { app, siteId, range, query, search, role } = useScope()
+  const cards = siteId ? [] : exceptionSiteCards({ app, query, range })
   const site = getSite(siteId)
   const kpis = execKpis({ app, siteId, range })
   const insights = insightsForScope({ app, siteId, range, role: 'exec' })
@@ -35,6 +37,9 @@ export function ExecBrief() {
       </div>
       {kpis.length > 0 ? <KpiRow items={kpis} /> : null}
       {app === 'events' ? null : <DomainBoard app={app} siteId={siteId} range={range} />}
+      {cards.length > 0 ? (
+        <SiteCards items={cards} hrefFor={(id) => `/apps/${app}/sites/${id}${search}`} />
+      ) : null}
       {site ? (
         <section className="deck">
           <h2>계약</h2>

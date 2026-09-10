@@ -4,7 +4,7 @@ import { KpiRow } from '../components/KpiRow.tsx'
 import { TrendChart } from '../components/TrendChart.tsx'
 import { getSite, listPoints } from '../lib/catalog.ts'
 import { findingsForScope } from '../lib/findings.ts'
-import { APP_LABEL, formatNumber } from '../lib/format.ts'
+import { APP_LABEL, RANGE_LABEL, formatNumber } from '../lib/format.ts'
 import { getTelemetry, kpisForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 import type { TimeRange } from '../types/domain.ts'
@@ -15,17 +15,21 @@ export function FocusView() {
   const kpis = kpisForScope({ app, siteId, range })
   const compareRange: TimeRange = range === '7d' ? '24h' : '7d'
   const primary = listPoints({ siteId, app: app === 'events' ? undefined : app })[0]
-  const now = primary ? getTelemetry(primary, range) : null
-  const prev = primary ? getTelemetry(primary, compareRange) : null
 
   if (view === 'peak') {
     const peak = kpis.find((item) => item.id === 'peak')
+    const peakPoint = listPoints({ siteId, app: 'power' }).find((row) => row.point.id === 'peak')
+    const comparePeak = peakPoint ? getTelemetry(peakPoint, compareRange) : null
     return (
       <FocusShell title={`${site?.name ?? ''} · 최대수요`} note="실측. 차단기 제어 없음.">
         {peak ? <KpiRow items={[peak]} /> : <div className="empty">피크 실측이 없습니다.</div>}
         <section className="panel">
-          <h2>추세</h2>
+          <h2>{RANGE_LABEL[range]}</h2>
           <TrendChart values={peak?.series ?? null} label="최대수요" />
+        </section>
+        <section className="panel">
+          <h2>비교 기간 · {RANGE_LABEL[compareRange]}</h2>
+          <TrendChart values={comparePeak?.series ?? null} label={`최대수요 ${RANGE_LABEL[compareRange]}`} />
         </section>
       </FocusShell>
     )
@@ -50,7 +54,13 @@ export function FocusView() {
   }
 
   if (view === 'gaps') {
-    const rows = listPoints({ siteId, app }).filter((row) => getTelemetry(row, range).certainty === 'unknown' || row.point.flags?.noTelemetry)
+    const rows = listPoints({ siteId }).filter((row) => {
+      const tel = getTelemetry(row, range)
+      const isGap = tel.certainty === 'unknown' || Boolean(row.point.flags?.noTelemetry)
+      if (!isGap) return false
+      if (app !== 'metering') return true
+      return row.point.tags.includes('meter') || Boolean(row.point.flags?.noTelemetry)
+    })
     const notes = findingsForScope({ app, siteId }).filter((item) => item.certainty === 'unknown')
     return (
       <FocusShell title={`${site?.name ?? ''} · 검침 공백`} note="0으로 채우지 않습니다.">
@@ -77,15 +87,17 @@ export function FocusView() {
   }
 
   if (view === 'compare') {
+    const day = primary ? getTelemetry(primary, '24h') : null
+    const week = primary ? getTelemetry(primary, '7d') : null
     return (
-      <FocusShell title={`${site?.name ?? ''} · 비교 기간`} note={`${APP_LABEL[app]} · 시리즈 2개. 추정을 확정처럼 겹치지 않습니다.`}>
+      <FocusShell title={`${site?.name ?? ''} · 비교 기간`} note={`${APP_LABEL[app]} · 24h vs 7d. 추정을 확정처럼 겹치지 않습니다.`}>
         <section className="panel">
-          <h2>현재 구간</h2>
-          <TrendChart values={now?.series ?? null} label="현재 구간" />
+          <h2>24시간</h2>
+          <TrendChart values={day?.series ?? null} label="24시간" />
         </section>
         <section className="panel">
-          <h2>비교 구간</h2>
-          <TrendChart values={prev?.series ?? null} label="비교 구간" />
+          <h2>7일</h2>
+          <TrendChart values={week?.series ?? null} label="7일" />
         </section>
       </FocusShell>
     )

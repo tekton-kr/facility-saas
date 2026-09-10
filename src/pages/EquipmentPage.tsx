@@ -32,7 +32,8 @@ export function EquipmentPage() {
     equipmentId: equipment.id,
     query,
   })
-  const primary = equipment.points[0]
+  const primary = equipment.points.find((point) => point.id === 'cap' || point.name.includes('면수'))
+    ?? equipment.points[0]
   const series = primary
     ? getTelemetry({
         siteId: site.id,

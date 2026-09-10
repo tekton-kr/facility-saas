@@ -1,5 +1,6 @@
 import { EventContext } from '../components/EventContext.tsx'
 import { DataTable } from '../components/DataTable.tsx'
+import { TimeWindow } from '../components/TimeWindow.tsx'
 import { connectorById, getSite } from '../lib/catalog.ts'
 import { formatDateTime, KIND_ALARM_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
 import { alarmInRange, alarmsForScope } from '../lib/telemetry.ts'
@@ -9,7 +10,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 
 export function EventFocus() {
-  const { siteId, range, view, search } = useScope()
+  const { siteId, range, view, search, patchParams } = useScope()
   const site = getSite(siteId)
   const alarms = alarmsForScope({ siteId, app: 'events' })
     .filter((alarm) => alarmInRange(alarm.at, range))
@@ -46,6 +47,7 @@ export function EventFocus() {
             <p>구간을 멈추고 다시 봅니다. ack·제어 없음.</p>
           </div>
         </div>
+        <TimeWindow value={range} onChange={(value) => patchParams({ range: value })} />
         <section className="deck">
           <h2>이력 {alarms.length}</h2>
           <DataTable data={alarms} columns={columns} empty="이 구간에 알람이 없습니다." getRowId={(row) => row.id} />
@@ -74,7 +76,7 @@ export function EventFocus() {
         <div className="page-head">
           <div>
             <h1>{site?.name} · CCTV 링크</h1>
-            <p>딥링크만 전달합니다. 영상 원본은 현장 VMS입니다.</p>
+            <p>딥링크만 전달합니다. 영상 아카이브는 보유하지 않습니다.</p>
           </div>
         </div>
         <section className="panel">

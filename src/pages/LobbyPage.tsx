@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 import { KpiRow } from '../components/KpiRow.tsx'
 import { getSites } from '../lib/catalog.ts'
+import { dutySiteId } from '../lib/roleHome.ts'
 import { alarmsForScope, kpisForScope } from '../lib/telemetry.ts'
 import { formatTime, KIND_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
 
@@ -21,6 +23,11 @@ export function LobbyPage() {
     })
     .sort((a, b) => b.critical - a.critical || b.warning - a.warning)
 
+  const duty = getSites().find((site) => site.id === dutySiteId('events')) ?? getSites()[0]
+  const hotPlan = duty?.plans.find((plan) =>
+    alarms.some((alarm) => alarm.siteId === duty.id && alarm.planId === plan.id),
+  ) ?? duty?.plans[0]
+
   return (
     <div className="lobby">
       <div className="page-head">
@@ -37,9 +44,19 @@ export function LobbyPage() {
 
         <section className="panel">
           <h2>현장 {sites.length}</h2>
+          {duty && hotPlan ? (
+            <div className="plan" data-plan={hotPlan.id}>
+              {duty.plans.map((plan) => (
+                <div key={plan.id} className={`plan-zone${plan.id === hotPlan.id ? ' is-hot' : ''}`}>
+                  {duty.name} · {plan.name}
+                  {plan.id === hotPlan.id ? <span>알람 위치</span> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
           <div className="list">
             {sites.map((item) => (
-              <div key={item.site.id} className="list-item">
+              <Link key={item.site.id} className="list-item" to={`/apps/events/sites/${item.site.id}`}>
                 <span>
                   <strong>{item.site.name}</strong>
                   <div className="kpi-meta">{KIND_LABEL[item.site.kind]} · {item.site.location}</div>
@@ -49,7 +66,7 @@ export function LobbyPage() {
                   {item.warning > 0 ? <span className="badge is-warning">주의 {item.warning}</span> : null}
                   {item.critical + item.warning === 0 ? <span className="kpi-meta">열린 알람 없음</span> : null}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
           <p className="kpi-note">알람이 있는 현장만 색이 납니다. 3D 트윈은 두지 않습니다.</p>
@@ -60,13 +77,13 @@ export function LobbyPage() {
           {alarms.length === 0 ? <div className="empty">열린 위험·주의가 없습니다.</div> : null}
           <div className="list">
             {alarms.map((alarm) => (
-              <div key={alarm.id} className="list-item">
+              <Link key={alarm.id} className="list-item" to={`/apps/events/sites/${alarm.siteId}?event=${alarm.id}`}>
                 <span>
                   <strong>{alarm.title}</strong>
                   <div className="kpi-meta mono-time">{formatTime(alarm.at)}</div>
                 </span>
                 <span className={`badge is-${alarm.severity}`}>{SEVERITY_LABEL[alarm.severity]}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
