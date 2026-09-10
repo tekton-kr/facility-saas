@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react'
-import type { Plugin } from 'vite'
+import type { Plugin, PreviewServer, ViteDevServer } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 
 function requireApiOrigin(apiOrigin: string | undefined): Plugin {
-  const guard: Plugin['configureServer'] = (server) => {
+  function attach(server: ViteDevServer | PreviewServer) {
     server.middlewares.use((req, res, next) => {
       if (apiOrigin || !req.url?.startsWith('/api')) {
         next()
@@ -16,8 +16,8 @@ function requireApiOrigin(apiOrigin: string | undefined): Plugin {
   }
   return {
     name: 'require-api-origin',
-    configureServer: guard,
-    configurePreviewServer: guard,
+    configureServer: attach,
+    configurePreviewServer: attach,
   }
 }
 
