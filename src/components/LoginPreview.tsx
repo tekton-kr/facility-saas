@@ -35,45 +35,50 @@ export function LoginPreview() {
 
   return (
     <aside className="login-preview" aria-hidden="true">
-      <div className="login-window">
-        <div className="login-window-bar">
-          <span />
-          <span />
-          <span />
-          <em>T-ARCH · 이벤트</em>
-          <time className="login-window-clock">{clock}</time>
+      <div className="login-stage">
+        <figure className="login-stage-photo">
+          <img src="/login-plant.jpg" alt="" />
+          <figcaption>하남 본사 · {arrived ? '2층' : '전기실'}</figcaption>
+        </figure>
+        <div className="login-window">
+          <div className="login-window-bar">
+            <span />
+            <span />
+            <span />
+            <em>T-ARCH · 이벤트</em>
+            <time className="login-window-clock">{clock}</time>
+          </div>
+          <div className="login-window-body">
+            <div className="login-window-kpis">
+              <div>
+                <small>위험</small>
+                <strong key={arrived ? 2 : 1} className={!reduced && arrived ? 'is-tick' : undefined}>
+                  {arrived ? 2 : 1}
+                </strong>
+              </div>
+              <div>
+                <small>주의</small>
+                <strong>3</strong>
+              </div>
+            </div>
+            <div className="login-window-split">
+              <ul>
+                {arrived ? (
+                  <li className={`is-critical${reduced ? '' : ' is-enter'}`}>2구역 화재 알람</li>
+                ) : null}
+                <li className="is-warning">수전 통신 두절</li>
+                <li>1층 침입 감지</li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div className="login-window-body">
-          <div className="login-window-kpis">
-            <div>
-              <small>위험</small>
-              <strong key={arrived ? 2 : 1} className={!reduced && arrived ? 'is-tick' : undefined}>
-                {arrived ? 2 : 1}
-              </strong>
-            </div>
-            <div>
-              <small>주의</small>
-              <strong>3</strong>
-            </div>
-            <div className="is-estimate">
-              <small>추정 절감</small>
-              <strong>1.2</strong>
-              <b>백만원</b>
-            </div>
+        <div className="login-float">
+          <div className="login-float-top">
+            <small>추정 절감</small>
+            <span className="badge is-estimate">추정</span>
           </div>
-          <div className="login-window-split">
-            <ul>
-              {arrived ? (
-                <li className={`is-critical${reduced ? '' : ' is-enter'}`}>2구역 화재 알람</li>
-              ) : null}
-              <li className="is-warning">수전 통신 두절</li>
-              <li>1층 침입 감지</li>
-            </ul>
-            <figure>
-              <img src="/login-plant.jpg" alt="" />
-              <figcaption>도면 · {arrived ? '2층' : '전기실'}</figcaption>
-            </figure>
-          </div>
+          <strong>1.2<b>백만원</b></strong>
+          <small className="login-float-note">요금제·계수 가정. 보장이 아님</small>
         </div>
       </div>
     </aside>
