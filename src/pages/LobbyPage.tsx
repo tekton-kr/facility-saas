@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { KpiRow } from '../components/KpiRow.tsx'
-import { getSites } from '../lib/catalog.ts'
+import { visibleSites } from '../lib/siteScope.ts'
 import { dutySiteId } from '../lib/roleHome.ts'
 import { alarmsForScope, kpisForScope } from '../lib/telemetry.ts'
 import { formatTime, KIND_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
@@ -12,7 +12,7 @@ export function LobbyPage() {
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
     .slice(0, 6)
 
-  const sites = getSites()
+  const sites = visibleSites()
     .map((site) => {
       const open = alarmsForScope({ siteId: site.id, app: 'events' })
       return {
@@ -23,7 +23,7 @@ export function LobbyPage() {
     })
     .sort((a, b) => b.critical - a.critical || b.warning - a.warning)
 
-  const duty = getSites().find((site) => site.id === dutySiteId('events')) ?? getSites()[0]
+  const duty = (sites.find((item) => item.site.id === dutySiteId('events')) ?? sites[0])?.site
   const hotPlan = duty?.plans.find((plan) =>
     alarms.some((alarm) => alarm.siteId === duty.id && alarm.planId === plan.id),
   ) ?? duty?.plans[0]

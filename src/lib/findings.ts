@@ -1,4 +1,5 @@
 import type { AppId, Finding } from '../types/domain.ts'
+import { isSiteAllowed } from './siteScope.ts'
 
 const SOURCE: Finding[] = [
     {
@@ -58,6 +59,7 @@ export function hydrateFindings(items: Finding[]) {
 export function findingsForScope(options: { app: AppId; siteId?: string }): Finding[] {
   const all = findingCache ?? SOURCE
   return all.filter((item) => {
+    if (!isSiteAllowed(item.siteId)) return false
     if (options.siteId && item.siteId !== options.siteId) return false
     if (options.app === 'events') return true
     if (options.app === 'power' || options.app === 'metering') return item.impact === '에너지' || item.impact === '데이터'

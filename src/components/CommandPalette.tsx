@@ -1,6 +1,7 @@
 import { Command } from 'cmdk'
 import { useNavigate } from 'react-router-dom'
-import { APP_IDS, getSites, listPoints, siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
+import { APP_IDS, listPoints, siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
+import { visibleSiteIds, visibleSites } from '../lib/siteScope.ts'
 import { packagesForScope, worksForScope } from '../lib/field.ts'
 import { APP_LABEL, formatNumber, KIND_LABEL } from '../lib/format.ts'
 import { alarmsForScope, getTelemetry } from '../lib/telemetry.ts'
@@ -14,8 +15,11 @@ type Props = {
 export function CommandPalette({ open, onOpenChange }: Props) {
   const navigate = useNavigate()
   const { app, range, role, goApp, goSite, goSystem, goEquipment, goPoint, eventHref } = useScope()
-  const sites = getSites().filter((site) => siteHasApp(site, app))
-  const points = listPoints({ app: app === 'events' ? undefined : app }).slice(0, 80)
+  const sites = visibleSites().filter((site) => siteHasApp(site, app))
+  const points = listPoints({
+    app: app === 'events' ? undefined : app,
+    siteIds: visibleSiteIds(),
+  }).slice(0, 80)
   const alarms = alarmsForScope({ app: app === 'events' ? 'events' : app }).slice(0, 12)
   const works = worksForScope().slice(0, 8)
   const packs = packagesForScope().slice(0, 8)

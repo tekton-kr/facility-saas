@@ -9,7 +9,7 @@ const H = 'POST /api/v1/auth/login'
 
 /** 별표 1. 59면. 현장 수로 곱하지 않는다. */
 export const SCREENS: ScreenDef[] = [
-  { id: 'S01', name: '로그인', group: 'auth', groupLabel: '인증', path: '/login', apis: [H], role: 'any', elements: ['이메일', '비밀번호', '조회 전용 안내'] },
+  { id: 'S01', name: '로그인', group: 'auth', groupLabel: '인증', path: '/login', apis: [H], role: 'any', elements: ['현장·역할', '조회 전용 안내'] },
   { id: 'S02', name: '세션 만료', group: 'auth', groupLabel: '인증', path: '/login?reason=expired', apis: [H], role: 'any', elements: ['만료 안내', '재로그인'] },
   { id: 'S03', name: '권한 없음', group: 'auth', groupLabel: '인증', path: '/forbidden', apis: [Q], role: 'any', elements: ['권한 없음 카드', '홈 링크'] },
   { id: 'S04', name: '운전자 홈', group: 'shell', groupLabel: '셸', path: '/apps/events/sites/suwon-off', apis: [Q, A, S], role: 'ops', elements: ['알람 배너', '알람 표', '도면'] },
@@ -54,7 +54,7 @@ export const SCREENS: ScreenDef[] = [
   { id: 'S43', name: 'EV 계통', group: 'ev', groupLabel: 'EV', path: '/apps/ev/sites/hanam-hq/systems/ev', apis: [Q, T], role: 'ops', elements: ['충전기'] },
   { id: 'S44', name: 'EV 장비', group: 'ev', groupLabel: 'EV', path: '/apps/ev/sites/hanam-hq/systems/ev/equipment/cp-1', apis: [Q, T], role: 'ops', elements: ['충전기 추세'] },
   { id: 'S45', name: 'EV 관제점', group: 'ev', groupLabel: 'EV', path: '/apps/ev/sites/hanam-hq/systems/ev/equipment/cp-1/points/kw', apis: [Q, T], role: 'ops', elements: ['충전 kW'] },
-  { id: 'S46', name: '유틸리티 현장', group: 'plant', groupLabel: '유틸리티', path: '/apps/power/sites/hanam-plant', apis: [Q, T, A], role: 'ops', elements: ['kind=utility', '수전 KPI'] },
+  { id: 'S46', name: '유틸리티 현장', group: 'plant', groupLabel: '유틸리티', path: '/apps/power/sites/hanam-plant', apis: [Q, T, A], role: 'ops', elements: ['kind=utility', '수전 KPI', 'P&ID', '출구온', '환수온'] },
   { id: 'S47', name: '장비 목록', group: 'plant', groupLabel: '유틸리티', path: '/apps/events/sites/hanam-hq/systems/hvac/equipment/ahu-1', apis: [Q, T], role: 'ops', elements: ['AHU-1', '관제점'] },
   { id: 'S48', name: '관제점 추세', group: 'plant', groupLabel: '유틸리티', path: '/apps/events/sites/hanam-hq/systems/hvac/equipment/ahu-1/points/sat', apis: [Q, T, S], role: 'ops', elements: ['급기온도', '추세'] },
   { id: 'S49', name: '비교 기간', group: 'plant', groupLabel: '유틸리티', path: '/apps/power/sites/hanam-hq?view=compare', apis: [Q, T], role: 'ops', elements: ['24h vs 7d', '시리즈 2'] },

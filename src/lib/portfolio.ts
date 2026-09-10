@@ -1,7 +1,8 @@
 import type { Alarm, AppId, Certainty, Kpi, Role, SiteDef, TimeRange } from '../types/domain.ts'
-import { countPoints, getSite, getSites, listPoints, siteHasApp } from './catalog.ts'
+import { countPoints, getSite, listPoints, siteHasApp } from './catalog.ts'
 import { findingsForScope } from './findings.ts'
 import { formatNumber } from './format.ts'
+import { visibleSites } from './siteScope.ts'
 import { alarmsForScope, getTelemetry, kpisForScope } from './telemetry.ts'
 
 export type SiteCardModel = {
@@ -119,7 +120,7 @@ function metricForSite(siteId: string, app: AppId, range: TimeRange): Pick<
 }
 
 export function siteCards(options: { app: AppId; query?: string; range: TimeRange }): SiteCardModel[] {
-  return getSites()
+  return visibleSites()
     .filter((site) => siteHasApp(site, options.app) && matchesQuery(site, options.query))
     .map((site) => {
       const alarms = siteAlarms(site.id, options.app)
@@ -209,7 +210,7 @@ export function rankSites(options: { app: AppId; range: TimeRange }): RankItem[]
 }
 
 export function powerHeatmap(options: { siteId?: string; range: TimeRange }): HeatmapRow[] {
-  const sites = options.siteId ? [getSite(options.siteId)].filter((site): site is SiteDef => Boolean(site)) : getSites()
+  const sites = options.siteId ? [getSite(options.siteId)].filter((site): site is SiteDef => Boolean(site)) : visibleSites()
   return sites.flatMap((site) => {
     if (!siteHasApp(site, 'power')) return []
     const main = listPoints({ siteId: site.id, app: 'power' }).find((row) => row.point.id === 'main')

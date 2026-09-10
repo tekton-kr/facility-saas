@@ -1,4 +1,5 @@
 import type { Catalog } from '../types/domain.ts'
+import { heatLoopPid } from './pid.ts'
 
 /**
  * 현장 추가 = 커넥터 + 이 카탈로그.
@@ -301,12 +302,20 @@ export const catalog: Catalog = {
               name: '열교환기 1',
               tags: ['hvac'],
               points: [
+                { id: 'in', name: '입구온도', unit: '°C', tags: ['hvac', 'sensor'] },
                 { id: 'out', name: '출구온도', unit: '°C', tags: ['hvac', 'sensor'] },
+                { id: 'ret', name: '환수온도', unit: '°C', tags: ['hvac', 'sensor'] },
               ],
             },
           ],
         },
       ],
+      pid: heatLoopPid({
+        powerSystem: 'power',
+        incomer: 'swgr',
+        hvacSystem: 'hvac',
+        exchanger: 'hx-1',
+      }),
     },
   ],
 }

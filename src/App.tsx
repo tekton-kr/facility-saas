@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell.tsx'
 import { RequireAuth } from './components/RequireAuth.tsx'
+import { SiteGate } from './components/SiteGate.tsx'
 import { Bootstrap } from './bootstrap.tsx'
 import { AppHome } from './pages/AppHome.tsx'
 import { EquipmentPage } from './pages/EquipmentPage.tsx'
@@ -25,6 +26,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<RequireAuth />}>
+            <Route element={<SiteGate />}>
             <Route element={<AppShell />}>
               <Route path="/" element={<RoleHomeRedirect />} />
               <Route path="/alarms" element={<RoleHomeRedirect />} />
@@ -52,6 +54,7 @@ export default function App() {
               <Route path="/lobby" element={<LobbyPage />} />
               <Route path="/forbidden" element={<ForbiddenPage />} />
               <Route path="*" element={<RoleHomeRedirect />} />
+            </Route>
             </Route>
           </Route>
         </Routes>

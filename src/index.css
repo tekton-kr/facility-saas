@@ -1469,6 +1469,130 @@ tbody tr.is-warning {
   grid-template-columns: 1fr;
 }
 
+.pid-board .kpi-note {
+  margin: 0 0 12px;
+}
+
+.pid-frame {
+  position: relative;
+  overflow-x: auto;
+  min-height: 300px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.pid-svg {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+}
+
+.pid-pipe {
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.pid-sym rect,
+.pid-sym circle,
+.pid-sym path,
+.pid-sym line {
+  fill: var(--surface);
+  stroke: var(--text-secondary);
+  stroke-width: 1.6;
+}
+
+.pid-sym.is-exchanger rect {
+  stroke: var(--text);
+  stroke-width: 1.8;
+}
+
+.pid-sym path {
+  fill: var(--surface);
+}
+
+.pid-sym.is-exchanger path {
+  fill: none;
+}
+
+.pid-chip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+}
+
+.pid-chip.is-above {
+  transform: translate(-50%, calc(-100% - 14px));
+}
+
+.pid-chip.is-below {
+  transform: translate(-50%, 14px);
+}
+
+.pid-chip.is-on {
+  min-width: 72px;
+  padding: 6px 8px;
+  border-color: var(--border);
+  background: var(--surface);
+  transform: translate(-50%, -50%);
+}
+
+.pid-tag {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.pid-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.pid-value small {
+  margin-left: 3px;
+  color: var(--text-disabled);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pid-chip.is-unknown .pid-value {
+  color: var(--status-unknown);
+}
+
+.pid-chip.is-stale {
+  outline: 1px dashed var(--status-warning);
+}
+
+.pid-chip.is-hot {
+  outline: 1px solid var(--status-critical);
+}
+
+.pid-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+button.pid-chip:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
 .share-ring-body {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
@@ -1799,10 +1923,7 @@ tbody tr.is-warning {
 .login-accounts {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+  gap: 10px;
 }
 
 .login-account {
@@ -1810,12 +1931,18 @@ tbody tr.is-warning {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 64px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-card);
   background: var(--chrome);
   text-align: left;
+}
+
+.login-key-note {
+  margin: 16px 0 0;
+  color: var(--text-disabled);
+  font-size: 11px;
 }
 
 .login-account strong {
@@ -2347,6 +2474,14 @@ tbody tr.is-warning {
 
   .plan {
     grid-template-columns: 1fr;
+  }
+
+  .pid-svg {
+    min-width: 640px;
+  }
+
+  .pid-chip .badge {
+    font-size: 10px;
   }
 
   .login {

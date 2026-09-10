@@ -10,6 +10,7 @@ export type Session = {
   email: string
   name: string
   role: 'ops' | 'exec'
+  siteIds: string[]
 }
 
 export function getToken(): string | null {
@@ -48,7 +49,13 @@ export function getSession(): Session | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as Session
     if (!parsed.email || (parsed.role !== 'ops' && parsed.role !== 'exec')) return null
-    return parsed
+    const stored = Array.isArray(parsed.siteIds)
+      ? parsed.siteIds.filter((id): id is string => typeof id === 'string')
+      : []
+    const siteIds = stored.length > 0 ? stored : mockLogin(parsed.email).siteIds
+    const session = { email: parsed.email, name: parsed.name, role: parsed.role, siteIds }
+    if (stored.length === 0) sessionStorage.setItem(KEY, JSON.stringify(session))
+    return session
   } catch {
     return null
   }
@@ -64,10 +71,15 @@ export function setSession(session: Session | null) {
   emit()
 }
 
-function establish(result: { token: string; email: string; name: string; role: Session['role'] }): Session {
+function establish(result: { token: string; email: string; name: string; role: Session['role']; siteIds: string[] }): Session {
   setToken(result.token)
   hydrateSnapshot(buildLocalSnapshot())
-  const session = { email: result.email, name: result.name, role: result.role }
+  const session = {
+    email: result.email,
+    name: result.name,
+    role: result.role,
+    siteIds: result.siteIds,
+  }
   setSession(session)
   return session
 }

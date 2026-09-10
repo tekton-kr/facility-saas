@@ -65,6 +65,7 @@ export type SiteDef = {
   plans: FloorPlan[]
   cameras: CameraRef[]
   systems: SystemDef[]
+  pid?: PidDiagram
 }
 
 export type Catalog = {
@@ -77,6 +78,36 @@ export type PointRef = {
   systemId: string
   equipmentId: string
   pointId: string
+}
+
+export type PidPointRef = Omit<PointRef, 'siteId'>
+
+export type PidNodeKind = 'source' | 'pump' | 'valve' | 'exchanger' | 'sensor' | 'sink'
+export type PidChipSlot = 'above' | 'below' | 'on'
+
+export type PidNode = {
+  id: string
+  kind: PidNodeKind
+  tag: string
+  label?: string
+  x: number
+  y: number
+  slot?: PidChipSlot
+  point?: PidPointRef
+}
+
+export type PidEdge = {
+  from: string
+  to: string
+  via?: Array<{ x: number; y: number }>
+}
+
+export type PidDiagram = {
+  id: string
+  title: string
+  note: string
+  nodes: PidNode[]
+  edges: PidEdge[]
 }
 
 export type Kpi = {

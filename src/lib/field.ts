@@ -1,3 +1,4 @@
+import { heatLoopPid } from '../data/pid.ts'
 import {
   accounts as seedAccounts,
   contracts as seedContracts,
@@ -19,6 +20,7 @@ import type {
   WorkStatus,
 } from '../types/domain.ts'
 import { appendSite, getSite } from './catalog.ts'
+import { isSiteAllowed } from './siteScope.ts'
 import { lastSyncAt } from './telemetry.ts'
 
 const KEY = 't-arch-field'
@@ -96,7 +98,7 @@ export function contractForSite(siteId: string | undefined): Contract | undefine
 
 export function worksForScope(siteId?: string): WorkOrder[] {
   return state.works
-    .filter((item) => !siteId || item.siteId === siteId)
+    .filter((item) => isSiteAllowed(item.siteId) && (!siteId || item.siteId === siteId))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
 
@@ -110,7 +112,7 @@ export function workByAlarm(alarmId: string): WorkOrder | undefined {
 }
 
 export function packagesForScope(siteId?: string): RenovationPackage[] {
-  return state.packages.filter((item) => !siteId || item.siteId === siteId)
+  return state.packages.filter((item) => isSiteAllowed(item.siteId) && (!siteId || item.siteId === siteId))
 }
 
 export function packageById(id: string | undefined): RenovationPackage | undefined {
@@ -135,6 +137,7 @@ export function contractsDueSoon(siteId?: string, withinDays = 120): number {
   const now = new Date(lastSyncAt()).getTime()
   const limit = now + withinDays * 86_400_000
   return state.contracts.filter((item) => {
+    if (!isSiteAllowed(item.siteId)) return false
     if (siteId && item.siteId !== siteId) return false
     const end = new Date(item.end).getTime()
     return end >= now && end <= limit
@@ -295,7 +298,11 @@ export function createSiteFromWizard(input: {
               id: 'hx-1',
               name: '열교환기',
               tags: ['hvac'],
-              points: [{ id: 'out', name: '출구온도', unit: '°C', tags: ['hvac', 'sensor'] }],
+              points: [
+                { id: 'in', name: '입구온도', unit: '°C', tags: ['hvac', 'sensor'] },
+                { id: 'out', name: '출구온도', unit: '°C', tags: ['hvac', 'sensor'] },
+                { id: 'ret', name: '환수온도', unit: '°C', tags: ['hvac', 'sensor'] },
+              ],
             }],
           }]
         : [{
@@ -310,6 +317,14 @@ export function createSiteFromWizard(input: {
             }],
           }]),
     ],
+    pid: input.preset === 'utility'
+      ? heatLoopPid({
+          powerSystem: 'power',
+          incomer: 'incomer',
+          hvacSystem: 'hvac',
+          exchanger: 'hx-1',
+        })
+      : undefined,
   }
   appendSite(site)
   const start = lastSyncAt().slice(0, 10)

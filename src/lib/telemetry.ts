@@ -1,5 +1,6 @@
 import type { Alarm, AppId, Kpi, PointRef, QuerySnapshot, Telemetry, TimeRange } from '../types/domain.ts'
-import { getPoint, getSite, getSites, listPoints, pointKey } from './catalog.ts'
+import { getPoint, getSite, listPoints, pointKey } from './catalog.ts'
+import { isSiteAllowed, visibleSiteIds, visibleSites } from './siteScope.ts'
 import { isBrowser } from './env.ts'
 
 const SAMPLE_AT = new Date('2026-09-10T20:04:00+09:00')
@@ -25,6 +26,14 @@ function isoMinutesAgo(minutes: number): string {
 
 function baseline(ref: PointRef): number {
   const seed = hash(pointKey(ref))
+  const found = getPoint(ref)
+  if (found?.point.unit === '°C') {
+    if (ref.pointId === 'out') return 36.8 + (seed % 8) / 10
+    if (ref.pointId === 'ret') return 28.4 + (seed % 6) / 10
+    if (ref.pointId === 'in') return 29.1 + (seed % 5) / 10
+    return 22 + (seed % 8)
+  }
+  if (ref.pointId === 'main' && found?.site.kind === 'utility') return 820 + (seed % 40)
   if (ref.pointId === 'daily' || ref.pointId === 'today' || ref.pointId === 'kwh') return 180 + (seed % 40)
   if (ref.pointId === 'peak' || ref.pointId === 'cap') return 90 + (seed % 20)
   if (ref.pointId === 'occ') return 40 + (seed % 30)
@@ -97,8 +106,9 @@ export function generateTelemetry(ref: PointRef, range: TimeRange): Telemetry {
   const n = seriesLength(range)
   const seed = hash(pointKey(ref) + range)
   const base = baseline(ref)
+  const amp = base >= 200 ? base * 0.02 : base * 0.08
   const series = Array.from({ length: n }, (_, index) => {
-    const wave = Math.sin((index + (seed % 7)) / 3.2) * (base * 0.08)
+    const wave = Math.sin((index + (seed % 7)) / 3.2) * amp
     return Math.round((base + wave) * 10) / 10
   })
   const current = series[n - 1] ?? null
@@ -159,6 +169,59 @@ function seriesOf(
   return row ? getTelemetry(row, range).series : null
 }
 
+function plantKpis(siteId: string, range: TimeRange): Kpi[] {
+  const rows = listPoints({ siteId })
+  const main = rows.find((row) => row.point.id === 'main' && row.point.tags.includes('elec'))
+  const out = rows.find((row) => row.point.id === 'out')
+  const ret = rows.find((row) => row.point.id === 'ret')
+  const mainTel = main ? getTelemetry(main, range) : undefined
+  const outTel = out ? getTelemetry(out, range) : undefined
+  const retTel = ret ? getTelemetry(ret, range) : undefined
+  const open = alarmsForScope({ siteId }).filter((item) => (
+    item.severity === 'critical' || item.severity === 'warning'
+  )).length
+
+  return [
+    {
+      id: 'demand',
+      label: '수전',
+      value: mainTel?.current ?? null,
+      unit: 'kW',
+      certainty: mainTel?.certainty ?? 'unknown',
+      receivedAt: mainTel?.receivedAt ?? null,
+      note: mainTel?.note,
+      series: mainTel?.series ?? null,
+    },
+    {
+      id: 'out',
+      label: '출구온',
+      value: outTel?.current ?? null,
+      unit: '°C',
+      certainty: outTel?.certainty ?? 'unknown',
+      receivedAt: outTel?.receivedAt ?? null,
+      series: outTel?.series ?? null,
+    },
+    {
+      id: 'ret',
+      label: '환수온',
+      value: retTel?.current ?? null,
+      unit: '°C',
+      certainty: retTel?.certainty ?? 'unknown',
+      receivedAt: retTel?.receivedAt ?? null,
+      series: retTel?.series ?? null,
+    },
+    {
+      id: 'plant-alarms',
+      label: '플랜트 알람',
+      value: open,
+      unit: '건',
+      certainty: 'confirmed',
+      receivedAt: lastSyncAt(),
+      note: '위험·주의만. ack·제어 없음',
+    },
+  ]
+}
+
 export function kpisForScope(options: {
   app: AppId
   siteId?: string
@@ -167,14 +230,19 @@ export function kpisForScope(options: {
 }): Kpi[] {
   const points = listPoints({
     siteId: options.siteId,
+    siteIds: options.siteId ? undefined : visibleSiteIds(),
     systemId: options.systemId,
     app: options.app === 'events' ? undefined : options.app,
   })
-  const sites = options.siteId ? [getSite(options.siteId)].filter(Boolean) : getSites()
+  const sites = options.siteId ? [getSite(options.siteId)].filter(Boolean) : visibleSites()
   const missingArea = sites.some((site) => site && site.areaM2 == null)
   const totalArea = sites.reduce((sum, site) => sum + (site?.areaM2 ?? 0), 0)
 
   if (options.app === 'power') {
+    const site = options.siteId ? getSite(options.siteId) : undefined
+    if (site?.kind === 'utility') {
+      return plantKpis(site.id, options.range)
+    }
     const energy = sumTag(points, options.range, 'meter', 'daily')
     const demand = points.find((row) => row.point.id === 'main')
     const demandTel = demand ? getTelemetry(demand, options.range) : undefined
@@ -366,6 +434,7 @@ export function generateAlarms(): Alarm[] {
 export function alarmsForScope(options: { siteId?: string; app?: AppId }): Alarm[] {
   const all = queryHydrated && alarmCache ? alarmCache : generateAlarms()
   return all.filter((alarm) => {
+    if (!isSiteAllowed(alarm.siteId)) return false
     if (options.siteId && alarm.siteId !== options.siteId) return false
     if (options.app && options.app !== 'events') {
       const found = alarm.systemId && alarm.equipmentId && alarm.pointId

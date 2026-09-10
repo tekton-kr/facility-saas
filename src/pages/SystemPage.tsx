@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { KpiRow } from '../components/KpiRow.tsx'
+import { PidBoard } from '../components/PidBoard.tsx'
 import { PointDrawer } from '../components/PointDrawer.tsx'
 import { PointTable, type PointRow } from '../components/PointTable.tsx'
 import { getSystem, listPoints } from '../lib/catalog.ts'
@@ -45,6 +46,9 @@ export function SystemPage() {
         </div>
       </div>
       {kpis.length > 0 ? <KpiRow items={kpis} /> : null}
+      {site.pid ? (
+        <PidBoard site={site} diagram={site.pid} range={range} onOpen={setDrawer} />
+      ) : null}
       <section className="deck">
         <h2>장비</h2>
         <div className="list">

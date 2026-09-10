@@ -1,14 +1,15 @@
 import type { AppId, Kpi, TimeRange } from '../types/domain.ts'
-import { getSites, siteHasApp } from './catalog.ts'
+import { siteHasApp } from './catalog.ts'
+import { visibleSites } from './siteScope.ts'
 import { contractsDueSoon, openSlaCount, packagesForScope } from './field.ts'
 import { findingsForScope } from './findings.ts'
 import { siteCards, type SiteCardModel } from './portfolio.ts'
 import { alarmsForScope, kpisForScope, lastSyncAt } from './telemetry.ts'
 
 export function dutySiteId(app: AppId = 'events'): string {
-  const sites = getSites().filter((site) => siteHasApp(site, app))
+  const sites = visibleSites().filter((site) => siteHasApp(site, app))
   const ranked = [...sites].sort((a, b) => alarmScore(b.id) - alarmScore(a.id))
-  return ranked[0]?.id ?? getSites()[0].id
+  return ranked[0]?.id ?? visibleSites()[0]?.id ?? ''
 }
 
 function alarmScore(siteId: string): number {

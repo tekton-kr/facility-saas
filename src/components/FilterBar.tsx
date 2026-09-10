@@ -4,7 +4,7 @@ import { useAuth } from '../lib/useAuth.ts'
 import { AppNav } from './AppNav.tsx'
 import { PropertyFilter } from './PropertyFilter.tsx'
 import { TimeWindow } from './TimeWindow.tsx'
-import { getSites } from '../lib/catalog.ts'
+import { visibleSites } from '../lib/siteScope.ts'
 import { formatDateTime, KIND_LABEL, ROLE_LABEL } from '../lib/format.ts'
 import { alarmsForScope, lastSyncAt } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
@@ -39,7 +39,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
             }}
           >
             {role === 'exec' ? <option value="">포트폴리오</option> : null}
-            {getSites().map((site) => (
+            {visibleSites().map((site) => (
               <option key={site.id} value={site.id}>
                 {site.name} · {KIND_LABEL[site.kind]}
               </option>

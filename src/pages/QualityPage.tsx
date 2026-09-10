@@ -1,5 +1,6 @@
 import { CertaintyBadge } from '../components/CertaintyBadge.tsx'
-import { getSites, listPoints } from '../lib/catalog.ts'
+import { listPoints } from '../lib/catalog.ts'
+import { visibleSiteIds, visibleSites } from '../lib/siteScope.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 import { findingsForScope } from '../lib/findings.ts'
@@ -7,7 +8,7 @@ import { formatDateTime, formatNumber } from '../lib/format.ts'
 
 export function QualityPage() {
   const { range, view } = useScope()
-  const rows = listPoints({})
+  const rows = listPoints({ siteIds: visibleSiteIds() })
   const findings = findingsForScope({ app: 'events' })
   const confirmed = rows.filter((row) => getTelemetry(row, range).certainty === 'confirmed')
   const unknown = rows.filter((row) => {
@@ -16,7 +17,7 @@ export function QualityPage() {
   })
   const stale = rows.filter((row) => getTelemetry(row, range).certainty === 'stale')
   const offline = rows.filter((row) => row.point.flags?.offline)
-  const missingArea = getSites().filter((site) => site.areaM2 == null)
+  const missingArea = visibleSites().filter((site) => site.areaM2 == null)
   const focus = view === 'unknown' ? unknown : rows.filter((row) => {
     const tel = getTelemetry(row, range)
     return tel.certainty !== 'confirmed'

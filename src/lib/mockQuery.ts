@@ -10,6 +10,7 @@ export type MockAccount = {
   name: string
   role: Role
   note: string
+  siteIds: string[]
 }
 
 export const MOCK_ACCOUNTS: MockAccount[] = [
@@ -17,13 +18,15 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     email: 'ops@t-arch.local',
     name: '현장 근무',
     role: 'ops',
-    note: '목업. 근무 현장 하나',
+    note: '수원 오피스만',
+    siteIds: ['suwon-off'],
   },
   {
     email: 'exec@t-arch.local',
     name: '경영 조회',
     role: 'exec',
-    note: '목업. 포트폴리오',
+    note: '등록 현장 전체',
+    siteIds: ['hanam-hq', 'yongin-dc', 'suwon-off', 'hanam-plant'],
   },
 ]
 
@@ -32,6 +35,7 @@ export function mockLogin(email: string): {
   email: string
   name: string
   role: Role
+  siteIds: string[]
 } {
   const trimmed = email.trim().toLowerCase()
   const matched = MOCK_ACCOUNTS.find((item) => item.email === trimmed)
@@ -44,6 +48,7 @@ export function mockLogin(email: string): {
     email: account.email,
     name: account.name,
     role: account.role,
+    siteIds: account.siteIds,
   }
 }
 

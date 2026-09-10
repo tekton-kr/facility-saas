@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { getSites, siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
+import { siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
+import { visibleSites } from '../lib/siteScope.ts'
 import { getScreens } from '../data/screens.ts'
 import { KIND_LABEL } from '../lib/format.ts'
 import { dutySiteId } from '../lib/roleHome.ts'
@@ -64,7 +65,7 @@ export function SiteTree({ open, onNavigate }: Props) {
         <NavLink to={`/quality${search}`} className="tree-link" onClick={onNavigate}>
           데이터 품질
         </NavLink>
-        {getSites().filter((site) => siteHasApp(site, app)).map((site) => {
+        {visibleSites().filter((site) => siteHasApp(site, app)).map((site) => {
           const hay = `${site.name} ${site.location} ${site.systems.map((system) => system.name).join(' ')}`.toLowerCase()
           if (q && !hay.includes(q)) return null
           const severity = siteDot(site.id)

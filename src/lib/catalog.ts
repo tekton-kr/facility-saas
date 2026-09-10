@@ -135,6 +135,22 @@ export function getPoint(ref: PointRef): {
   return { ...found, point }
 }
 
+export function listPidPoints(site: SiteDef) {
+  if (!site.pid) return []
+  const seen = new Set<string>()
+  const rows: ReturnType<typeof listPoints> = []
+  for (const node of site.pid.nodes) {
+    if (!node.point) continue
+    const ref = { siteId: site.id, ...node.point }
+    const key = pointKey(ref)
+    if (seen.has(key)) continue
+    seen.add(key)
+    const found = getPoint(ref)
+    if (found) rows.push({ ...ref, ...found })
+  }
+  return rows
+}
+
 export function countPoints(site: SiteDef): number {
   return site.systems.reduce(
     (sum, system) => sum + system.equipment.reduce((inner, equipment) => inner + equipment.points.length, 0),
@@ -144,6 +160,7 @@ export function countPoints(site: SiteDef): number {
 
 export function listPoints(options: {
   siteId?: string
+  siteIds?: string[]
   systemId?: string
   equipmentId?: string
   app?: AppId
@@ -154,6 +171,7 @@ export function listPoints(options: {
 
   for (const site of catalog.sites) {
     if (options.siteId && site.id !== options.siteId) continue
+    if (options.siteIds && !options.siteIds.includes(site.id)) continue
     for (const system of site.systems) {
       if (options.systemId && system.id !== options.systemId) continue
       if (options.app && options.app !== 'events' && !systemMatchesApp(system, options.app)) continue

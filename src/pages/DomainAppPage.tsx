@@ -11,7 +11,8 @@ import { PortfolioLine } from '../components/PortfolioLine.tsx'
 import { QuietSites } from '../components/QuietSites.tsx'
 import { RankBars } from '../components/RankBars.tsx'
 import { SiteCards } from '../components/SiteCards.tsx'
-import { getSite, listPoints, siteHasApp } from '../lib/catalog.ts'
+import { PidBoard } from '../components/PidBoard.tsx'
+import { getSite, listPidPoints, listPoints, siteHasApp } from '../lib/catalog.ts'
 import { APP_LABEL, KIND_LABEL } from '../lib/format.ts'
 import { insightsForScope, rankSites } from '../lib/portfolio.ts'
 import { exceptionSiteCards, execKpis, portfolioHeadline, quietSiteCards } from '../lib/roleHome.ts'
@@ -19,6 +20,14 @@ import { useCompact } from '../lib/media.ts'
 import { kpisForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 import { FocusView } from './FocusView.tsx'
+
+function mergeRows(pidRows: PointRow[], appRows: PointRow[]): PointRow[] {
+  const seen = new Set(pidRows.map((row) => `${row.site.id}.${row.system.id}.${row.equipment.id}.${row.point.id}`))
+  return [
+    ...pidRows,
+    ...appRows.filter((row) => !seen.has(`${row.site.id}.${row.system.id}.${row.equipment.id}.${row.point.id}`)),
+  ]
+}
 
 export function DomainAppPage() {
   const compact = useCompact()
@@ -93,21 +102,33 @@ export function DomainAppPage() {
 
   const kpis = kpisForScope({ app, siteId, range })
   const insights = insightsForScope({ app, siteId, range, role: 'ops' })
+  const pid = site?.pid
+  const tableRows = pid && site
+    ? mergeRows(listPidPoints(site), rows)
+    : rows
 
   return (
     <>
       <div className="page-head">
         <div>
-          <h1>{site ? `${site.name} · ${APP_LABEL[app]}` : APP_LABEL[app]}</h1>
+          <h1>{site ? `${site.name} · ${pid ? pid.title : APP_LABEL[app]}` : APP_LABEL[app]}</h1>
           <p>
-            {site ? `${KIND_LABEL[site.kind]} · ${site.location}. 계통·장비·관제점.` : '이 현장의 관제점입니다.'}
+            {site
+              ? pid
+                ? `${KIND_LABEL[site.kind]} · ${site.location}. 조회 전용. 보호동작은 현장 헤드엔드.`
+                : `${KIND_LABEL[site.kind]} · ${site.location}. 계통·장비·관제점.`
+              : '이 현장의 관제점입니다.'}
           </p>
         </div>
       </div>
       {kpis.length > 0 ? <KpiRow items={kpis} /> : (
         <div className="empty">이 앱에 표시할 실측이 없습니다.</div>
       )}
-      <DomainBoard app={app} siteId={siteId} range={range} />
+      {pid && site ? (
+        <PidBoard site={site} diagram={pid} range={range} onOpen={setDrawer} />
+      ) : (
+        <DomainBoard app={app} siteId={siteId} range={range} />
+      )}
       {insights.length > 0 ? (
         compact ? (
           <details className="deck insight-fold">
@@ -121,9 +142,9 @@ export function DomainAppPage() {
       <section className="deck">
         <h2>관제점</h2>
         {compact ? (
-          <PointCards rows={rows} range={range} onOpen={setDrawer} />
+          <PointCards rows={tableRows} range={range} onOpen={setDrawer} />
         ) : (
-          <PointTable rows={rows} range={range} onOpen={setDrawer} />
+          <PointTable rows={tableRows} range={range} onOpen={setDrawer} />
         )}
       </section>
       <PointDrawer
