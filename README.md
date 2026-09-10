@@ -29,7 +29,7 @@ npm run check:contract
 npm run check:load
 ```
 
-산출물: 로컬 `handover/` (git에 올리지 않음)
+문서: 로컬 `docs/` (git에 올리지 않음)
 
 ## 구조
 

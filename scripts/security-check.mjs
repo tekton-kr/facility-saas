@@ -31,7 +31,7 @@ try {
   findings.push({ id: 'AUDIT', severity: 'info', item: 'npm audit', detail: 'audit JSON을 파싱하지 못했습니다.' })
 }
 
-mkdirSync(new URL('../handover', import.meta.url), { recursive: true })
+mkdirSync(new URL('../docs', import.meta.url), { recursive: true })
 const report = {
   checkedAt: new Date().toISOString(),
   screens: ids.length,
@@ -39,6 +39,6 @@ const report = {
   findings,
   writePath: 'POST /api/v1/control 은 410을 반환해야 함 (런타임 재확인)',
 }
-writeFileSync(new URL('../handover/security-check.json', import.meta.url), JSON.stringify(report, null, 2))
+writeFileSync(new URL('../docs/security-check.json', import.meta.url), JSON.stringify(report, null, 2))
 console.log(JSON.stringify(report, null, 2))
 if (findings.some((item) => item.severity === 'high')) process.exitCode = 1

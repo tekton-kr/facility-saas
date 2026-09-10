@@ -83,7 +83,7 @@ const result = {
   samples,
 }
 
-mkdirSync(new URL('../handover', import.meta.url), { recursive: true })
-writeFileSync(new URL('../handover/load-test-raw.json', import.meta.url), JSON.stringify(result, null, 2))
+mkdirSync(new URL('../docs', import.meta.url), { recursive: true })
+writeFileSync(new URL('../docs/load-test-raw.json', import.meta.url), JSON.stringify(result, null, 2))
 console.log(JSON.stringify({ ...result, samples: undefined }, null, 2))
 if (!result.pass) process.exitCode = 1

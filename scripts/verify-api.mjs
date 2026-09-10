@@ -51,8 +51,8 @@ const result = {
   unauthStatus: unauthorized.status,
 }
 
-mkdirSync(new URL('../handover', import.meta.url), { recursive: true })
-writeFileSync(new URL('../handover/api-verify.json', import.meta.url), JSON.stringify(result, null, 2))
+mkdirSync(new URL('../docs', import.meta.url), { recursive: true })
+writeFileSync(new URL('../docs/api-verify.json', import.meta.url), JSON.stringify(result, null, 2))
 console.log(JSON.stringify(result, null, 2))
 if (result.screens !== 59 || result.writeStatus !== 410 || result.unauthStatus !== 401 || result.accountHasPassword) {
   process.exitCode = 1

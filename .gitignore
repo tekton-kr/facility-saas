@@ -144,10 +144,9 @@ vite.config.ts.timestamp-*
 dist-ssr
 *.local
 
-# Local docs / images / handover — keep out of git
+# Local docs / images — keep out of git
 docs/
 images/
-handover/
 
 # OS
 .DS_Store
