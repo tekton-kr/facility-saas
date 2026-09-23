@@ -1,17 +1,10 @@
 import type { QuerySnapshot, Role } from '../types/domain.ts'
 import { hydrateCatalog } from './catalog.ts'
 import { hydrateFindings } from './findings.ts'
-import { applyStreamTick, hydrateTelemetry } from './telemetry.ts'
+import { hydrateTelemetry } from './telemetry.ts'
 import { getToken } from './auth.ts'
 
-const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1'
-
-export type AuthAccount = {
-  email: string
-  name: string
-  role: Role
-  note: string
-}
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/saas'
 
 export type LoginResult = {
   token: string
@@ -57,12 +50,6 @@ async function parse<T>(response: Response): Promise<T> {
   return (body ?? {}) as T
 }
 
-export async function fetchAccounts(): Promise<AuthAccount[]> {
-  const response = await fetch(`${API_BASE}/auth/accounts`, { headers: headers() })
-  const body = await parse<{ accounts: AuthAccount[] }>(response)
-  return body.accounts
-}
-
 export async function loginRequest(email: string, password: string): Promise<LoginResult> {
   const response = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
@@ -72,42 +59,31 @@ export async function loginRequest(email: string, password: string): Promise<Log
   return parse<LoginResult>(response)
 }
 
-export async function loginDemoRequest(email: string): Promise<LoginResult> {
-  const response = await fetch(`${API_BASE}/auth/demo`, {
-    method: 'POST',
-    headers: headers({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ email }),
-  })
-  return parse<LoginResult>(response)
+export async function fetchSites() {
+  const response = await fetch(`${API_BASE}/sites`, { headers: headers() })
+  return parse<unknown>(response)
 }
 
-export async function fetchSnapshot(): Promise<QuerySnapshot> {
-  const response = await fetch(`${API_BASE}/snapshot`, { headers: headers() })
-  return parse<QuerySnapshot>(response)
+export async function fetchSiteReadings(siteId: string) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/readings`, { headers: headers() })
+  return parse<unknown>(response)
+}
+
+export async function fetchReadings(since?: string) {
+  const query = since ? `?since=${encodeURIComponent(since)}` : ''
+  const response = await fetch(`${API_BASE}/readings${query}`, { headers: headers() })
+  return parse<unknown>(response)
+}
+
+export async function fetchDashboardSummary(siteId: string) {
+  const response = await fetch(`${API_BASE}/sites/${encodeURIComponent(siteId)}/dashboard/summary`, {
+    headers: headers(),
+  })
+  return parse<unknown>(response)
 }
 
 export function hydrateSnapshot(snapshot: QuerySnapshot) {
   hydrateCatalog(snapshot.catalog)
   hydrateFindings(snapshot.findings)
   hydrateTelemetry(snapshot)
-}
-
-export function openQueryStream(onTick: () => void): () => void {
-  const token = getToken()
-  if (!token || typeof EventSource === 'undefined') return () => {}
-  const source = new EventSource(`${API_BASE}/stream?access_token=${encodeURIComponent(token)}`)
-  source.onmessage = (event) => {
-    let payload: {
-      syncAt: string
-      points: Array<{ key: string; current: number | null; receivedAt: string | null }>
-    }
-    try {
-      payload = JSON.parse(event.data) as typeof payload
-    } catch {
-      return
-    }
-    applyStreamTick(payload)
-    onTick()
-  }
-  return () => source.close()
 }

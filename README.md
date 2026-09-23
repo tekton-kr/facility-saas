@@ -8,7 +8,9 @@
 cp .env.example .env
 ```
 
-`.env`의 `API_ORIGIN`에 중앙 조회 서버 origin을 넣습니다. 브라우저는 `VITE_API_BASE`(`/api/v1`)로 요청하고, 개발 서버가 그 요청을 중앙 서버로 넘깁니다. 소스에 비밀번호를 두지 않습니다.
+브라우저는 `/api/saas`만 봅니다. 로그인·현장·검침·대시보드 조회입니다. ingest·edge는 이 프론트에 없습니다.
+
+`.env`의 `API_ORIGIN`은 `https://api.tekton.co.kr`입니다. 개발 서버가 `/api/saas`를 그 호스트로 넘깁니다. 소스에 비밀번호를 두지 않습니다.
 
 ```bash
 npm install

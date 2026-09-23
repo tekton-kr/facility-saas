@@ -3,8 +3,8 @@
   publish = "dist"
 
 [[redirects]]
-  from = "/api/*"
-  to = "https://api.tekton.kr/api/:splat"
+  from = "/api/saas/*"
+  to = "https://api.tekton.co.kr/api/saas/:splat"
   status = 200
   force = true
 
