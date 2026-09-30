@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 
 const API_ORIGIN = 'https://saas-api.tekton.co.kr'
 
+// 브라우저의 /api/* 를 https://saas-api.tekton.co.kr/api/* 로 넘긴다.
 const proxy = {
   '/api': {
     target: API_ORIGIN,
