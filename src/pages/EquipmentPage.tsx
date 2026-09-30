@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { CollectionPending } from '../components/CollectionPending.tsx'
 import { PointDrawer } from '../components/PointDrawer.tsx'
 import { PointTable, type PointRow } from '../components/PointTable.tsx'
 import { TrendChart } from '../components/TrendChart.tsx'
 import { getEquipment, listPoints } from '../lib/catalog.ts'
-import { APP_LABEL } from '../lib/format.ts'
+import { isAppCollected, isDomainCollected } from '../lib/collection.ts'
+import { APP_LABEL, DOMAIN_LABEL } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 
@@ -26,6 +28,20 @@ export function EquipmentPage() {
   }
 
   const { site, system, equipment } = found
+  if (!isAppCollected(app) || !isDomainCollected(system.domain)) {
+    return (
+      <>
+        <div className="crumbs">
+          <Link to={`/apps/${app}${search}`}>{APP_LABEL[app]}</Link>
+          <span>/</span>
+          <Link to={`/apps/${app}/sites/${site.id}${search}`}>{site.name}</Link>
+          <span>/</span>
+          <span>{equipment.name}</span>
+        </div>
+        <CollectionPending title={`${DOMAIN_LABEL[system.domain]} · 연동 대기`} />
+      </>
+    )
+  }
   const rows = listPoints({
     siteId: site.id,
     systemId: system.id,

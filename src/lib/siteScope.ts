@@ -10,7 +10,7 @@ type StoredScope = {
 
 function readScope(): StoredScope | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
+    const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY)
     if (!raw) return null
     return JSON.parse(raw) as StoredScope
   } catch {
@@ -23,13 +23,16 @@ export function visibleSiteIds(): string[] {
   const known = getSites().map((site) => site.id)
   if (!scope) return []
   const listed = (scope.siteIds ?? []).filter((id) => known.includes(id))
-  if (listed.length > 0) return listed
-  return scope.role === 'exec' ? known : []
+  return listed
 }
 
 export function visibleSites(): SiteDef[] {
   const allowed = new Set(visibleSiteIds())
   return getSites().filter((site) => allowed.has(site.id))
+}
+
+export function hasPortfolio(): boolean {
+  return visibleSiteIds().length > 1
 }
 
 export function isSiteAllowed(siteId: string | undefined): boolean {

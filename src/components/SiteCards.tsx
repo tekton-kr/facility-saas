@@ -26,11 +26,7 @@ export function SiteCards({ items, hrefFor }: Props) {
               <img src={item.site.photo} alt="" loading="lazy" />
             </div>
           ) : (
-            <div className={`site-facade is-${item.site.kind}`} aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
+            <div className={`site-facade is-${item.site.kind}`} aria-hidden="true" />
           )}
           <div className="site-card-body">
             <div className="site-card-top">

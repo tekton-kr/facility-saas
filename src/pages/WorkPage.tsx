@@ -39,8 +39,8 @@ export function WorkPage() {
       <>
         <div className="page-head">
           <div>
-            <h1>{role === 'exec' ? '작업 · 포트폴리오' : '오늘 작업'}</h1>
-            <p>알람이 출동이 됩니다. 설정값·기동정지는 없습니다.</p>
+            <h1>{role === 'exec' ? '작업 · 포트폴리오' : '예외에서 한 걸음'}</h1>
+            <p>열린 예외에서 작업 한 건만 엽니다. CMMS를 대신하지 않습니다. 설정값·기동정지는 없습니다.</p>
           </div>
         </div>
         <section className="deck">

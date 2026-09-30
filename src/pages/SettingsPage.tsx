@@ -1,8 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { SiteWizard } from '../components/SiteWizard.tsx'
-import { connectorById, countPoints, getConnectors, getSites } from '../lib/catalog.ts'
-import { homePath } from '../lib/auth.ts'
+import { connectorById, countPoints, getConnectors, getSite, getSites } from '../lib/catalog.ts'
+import { homePath, signOut } from '../lib/auth.ts'
+import { formatPhone, listStaff, removeStaff, upsertStaff } from '../lib/staffRoster.ts'
+import { getTenant, tenantSites } from '../lib/tenant.ts'
+import { useAuth } from '../lib/useAuth.ts'
 import { addDirectoryAccount, addVendor } from '../lib/field.ts'
 import { DIRECTORY_LABEL, KIND_LABEL } from '../lib/format.ts'
 import { useField } from '../lib/useField.ts'
@@ -22,21 +25,30 @@ const SECTION_LABEL: Record<SettingsSection, string> = {
 }
 
 const ROLE_SCOPE = [
-  { role: 'ops' as const, note: '근무 현장 하나. 알람·관제점·도면·CCTV 링크.' },
-  { role: 'exec' as const, note: '포트폴리오 전체. 예외 현장과 추정. 설비 면밀도·태그는 열지 않습니다.' },
+  { role: 'ops' as const, note: '소장이 등록한 휴대폰으로 인증합니다. 로그아웃할 때까지 유지됩니다.' },
+  { role: 'exec' as const, note: '관리단·건물주. 배정된 이메일로 들어옵니다. 배정 현장만. 둘 이상이면 포트폴리오.' },
 ]
 
 export function SettingsPage() {
+  const session = useAuth()
   const { view } = useScope()
   const focus = SECTIONS.find((item) => item === view)
   const shows = (section: SettingsSection) => !focus || focus === section
   const screens = getScreens()
   const field = useField()
+  const tenant = getTenant(session?.tenantId)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<DirectoryRole>('ops')
   const [vendorName, setVendorName] = useState('')
   const [region, setRegion] = useState('')
+  const [staffName, setStaffName] = useState('')
+  const [staffPhone, setStaffPhone] = useState('')
+  const [staffSites, setStaffSites] = useState<string[]>(session?.siteIds ?? [])
+  const [staffError, setStaffError] = useState('')
+  const [rosterTick, setRosterTick] = useState(0)
+  const staff = tenant ? listStaff(tenant.id) : []
+  void rosterTick
 
   function onAccount(event: FormEvent) {
     event.preventDefault()
@@ -45,7 +57,7 @@ export function SettingsPage() {
       email: email.trim(),
       name: name.trim(),
       role,
-      siteScope: role === 'exec' ? '포트폴리오' : role === 'vendor' ? '배정 작업만' : '근무 현장',
+      siteScope: role === 'exec' ? '배정 현장' : role === 'vendor' ? '배정 작업만' : '배정 현장',
     })
     setName('')
     setEmail('')
@@ -82,6 +94,86 @@ export function SettingsPage() {
           <h2>현장 추가</h2>
           <SiteWizard />
         </section>
+      )}
+
+      {focus || session?.role !== 'ops' || !tenant ? null : (
+      <section className="panel">
+        <h2>시설직원 연락처</h2>
+        <p className="kpi-note">소장이 등록한 번호만 로그인됩니다. 그만둔 직원은 여기서 빼면 다음부터 못 들어옵니다.</p>
+        <div className="list">
+          {staff.map((item) => (
+            <div key={item.phone} className="list-item">
+              <span>
+                <strong>{item.name}</strong>
+                <div className="kpi-meta">{formatPhone(item.phone)} · {item.siteIds.map((id) => getSite(id)?.name).filter(Boolean).join(' · ')}</div>
+              </span>
+              <button
+                className="sheet-back"
+                type="button"
+                onClick={() => {
+                  removeStaff(item.phone)
+                  if (session.phone === item.phone) {
+                    signOut()
+                    return
+                  }
+                  setRosterTick((value) => value + 1)
+                }}
+              >
+                제외
+              </button>
+            </div>
+          ))}
+        </div>
+        <form
+          className="field-form"
+          onSubmit={(event) => {
+            event.preventDefault()
+            setStaffError('')
+            try {
+              upsertStaff({
+                phone: staffPhone,
+                name: staffName,
+                tenantId: tenant.id,
+                siteIds: staffSites,
+              })
+              setStaffName('')
+              setStaffPhone('')
+              setRosterTick((value) => value + 1)
+            } catch (err) {
+              setStaffError(err instanceof Error ? err.message : '등록하지 못했습니다.')
+            }
+          }}
+        >
+          <input aria-label="직원 이름" placeholder="이름" value={staffName} onChange={(event) => setStaffName(event.target.value)} />
+          <input
+            aria-label="휴대폰 번호"
+            inputMode="numeric"
+            placeholder="010"
+            value={formatPhone(staffPhone)}
+            onChange={(event) => setStaffPhone(event.target.value)}
+          />
+          <div className="staff-sites">
+            {tenantSites(tenant).map((site) => (
+              <label key={site.id}>
+                <input
+                  type="checkbox"
+                  checked={staffSites.includes(site.id)}
+                  onChange={() => {
+                    setStaffSites((current) => (
+                      current.includes(site.id)
+                        ? current.filter((id) => id !== site.id)
+                        : [...current, site.id]
+                    ))
+                  }}
+                />
+                {site.name}
+              </label>
+            ))}
+          </div>
+          <button className="sheet-back" type="submit">등록</button>
+        </form>
+        {staffError ? <p className="login-error" role="alert">{staffError}</p> : null}
+      </section>
       )}
 
       {focus ? null : (
@@ -197,7 +289,7 @@ export function SettingsPage() {
               <span className="kpi-meta">—</span>
             </div>
           </div>
-          <p className="kpi-note">두 역할 모두 조회 전용입니다. 어느 역할에도 설비 쓰기 경로가 없습니다.</p>
+          <p className="kpi-note">직원은 휴대폰, 관리단은 이메일, 텍톤 관제는 계약 현장 전부입니다. 조회 전용입니다.</p>
         </section>
       ) : null}
 

@@ -8,7 +8,7 @@ export function SiteGate() {
   const session = useAuth()
 
   if (siteId && !isSiteAllowed(siteId)) {
-    return <Navigate to={homePath(session?.role ?? 'ops')} replace />
+    return <Navigate to={homePath(session ?? 'ops')} replace />
   }
 
   return <Outlet />

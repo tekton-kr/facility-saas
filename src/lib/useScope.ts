@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { getSession } from './auth.ts'
 import { APP_IDS, getSite, siteHasApp } from './catalog.ts'
 import { dutySiteId } from './roleHome.ts'
+import { alarmsForScope } from './telemetry.ts'
+import { visibleSiteIds } from './siteScope.ts'
 import type { AlarmKind, AlarmSeverity, AppId, Role, TimeRange } from '../types/domain.ts'
 
 const RANGES: TimeRange[] = ['live', '1h', 'today', '24h', '7d', '30d']
@@ -47,7 +50,9 @@ export function useScope() {
   const eventId = params.get('event') ?? ''
   const severity = parseSeverity(params.get('sev'))
   const kind = parseKind(params.get('kind'))
-  const role = parseRole(params.get('role'))
+  const session = getSession()
+  const role = session?.role ?? parseRole(params.get('role'))
+  const command = session?.entry === 'command'
   const view = parseView(params.get('view'))
   const palette = params.get('palette') === '1'
 
@@ -106,10 +111,27 @@ export function useScope() {
   }
 
   function goApp(nextApp: AppId) {
+    const assigned = visibleSiteIds()
+    if (command) {
+      if (nextApp === 'events' && !siteId) {
+        navigate(`/apps/events${search}`)
+        return
+      }
+      if (siteId) {
+        navigate(`/apps/${nextApp}/sites/${siteId}${search}`)
+        return
+      }
+      navigate(`/apps/${nextApp}/sites/${dutySiteId(nextApp)}${search}`)
+      return
+    }
     if (role === 'ops') {
       const current = getSite(siteId)
       const site = current && siteHasApp(current, nextApp) ? current.id : dutySiteId(nextApp)
       navigate(`/apps/${nextApp}/sites/${site}${search}`)
+      return
+    }
+    if (assigned.length === 1) {
+      navigate(`/apps/${nextApp}/sites/${assigned[0]}${search}`)
       return
     }
     navigate(siteId ? `/apps/${nextApp}/sites/${siteId}${search}` : `/apps/${nextApp}${search}`)
@@ -161,14 +183,21 @@ export function useScope() {
   }
 
   function goHome() {
-    if (role === 'ops') {
-      navigate(`/apps/${app}/sites/${dutySiteId(app)}${search}`)
+    if (command) {
+      navigate(`/apps/events${search}`)
+      return
+    }
+    const assigned = visibleSiteIds()
+    if (role === 'ops' || assigned.length === 1) {
+      const site = assigned.length === 1 ? assigned[0] : dutySiteId(app)
+      navigate(`/apps/${app}/sites/${site}${search}`)
       return
     }
     navigate(`/apps/${app}${search}`)
   }
 
   function goRole(next: Role) {
+    if (session) return
     const copy = new URLSearchParams(params)
     copy.delete('event')
     if (next === 'ops') copy.delete('role')
@@ -180,18 +209,25 @@ export function useScope() {
   }
 
   function eventHref(id: string, atSiteId?: string) {
+    const target = atSiteId ?? siteId
+    const kept = new URLSearchParams(params)
+    kept.delete('event')
+    const keptText = kept.toString()
+    const keptSuffix = keptText ? `?${keptText}` : ''
+    if (role === 'exec') {
+      return target ? `/apps/${app}/sites/${target}${keptSuffix}` : `/apps/${app}${keptSuffix}`
+    }
+    const alarm = alarmsForScope({ siteId: target || atSiteId }).find((item) => item.id === id)
+    if (alarm?.systemId && alarm.equipmentId && target) {
+      const place = alarm.pointId
+        ? `/apps/${app}/sites/${alarm.siteId}/systems/${alarm.systemId}/equipment/${alarm.equipmentId}/points/${alarm.pointId}`
+        : `/apps/${app}/sites/${alarm.siteId}/systems/${alarm.systemId}/equipment/${alarm.equipmentId}`
+      return `${place}${keptSuffix}`
+    }
     const next = new URLSearchParams(params)
     next.set('event', id)
     const text = next.toString()
     const suffix = text ? `?${text}` : ''
-    const target = atSiteId ?? siteId
-    if (role === 'exec') {
-      const execParams = new URLSearchParams(params)
-      execParams.delete('event')
-      const execText = execParams.toString()
-      const execSuffix = execText ? `?${execText}` : ''
-      return target ? `/apps/${app}/sites/${target}${execSuffix}` : `/apps/${app}${execSuffix}`
-    }
     return target ? `/apps/events/sites/${target}${suffix}` : `/apps/events${suffix}`
   }
 
@@ -207,6 +243,7 @@ export function useScope() {
     severity,
     kind,
     role,
+    command,
     view,
     palette,
     search,

@@ -1,22 +1,28 @@
 import { AppIcon } from './AppIcon.tsx'
-import { APP_IDS } from '../lib/catalog.ts'
-import { APP_LABEL } from '../lib/format.ts'
+import type { AppId } from '../types/domain.ts'
 import { useScope } from '../lib/useScope.ts'
+
+const SERVICES: { id: AppId; label: string }[] = [
+  { id: 'events', label: '설비자동제어' },
+  { id: 'power', label: '전력' },
+  { id: 'metering', label: '원격검침' },
+  { id: 'solar', label: '제로에너지' },
+]
 
 export function AppNav() {
   const { app, goApp } = useScope()
 
   return (
-    <nav className="app-nav" aria-label="도메인 앱">
-      {APP_IDS.map((id) => (
+    <nav className="app-nav" aria-label="서비스">
+      {SERVICES.map((item) => (
         <button
-          key={id}
+          key={item.id}
           type="button"
-          className={id === app ? 'is-active' : ''}
-          onClick={() => goApp(id)}
+          className={item.id === app ? 'is-active' : ''}
+          onClick={() => goApp(item.id)}
         >
-          <AppIcon app={id} />
-          {APP_LABEL[id]}
+          <AppIcon app={item.id} />
+          {item.label}
         </button>
       ))}
     </nav>

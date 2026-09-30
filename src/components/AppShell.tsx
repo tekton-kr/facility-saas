@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
+import { BrandMark } from './BrandMark.tsx'
 import { AlarmRail } from './AlarmRail.tsx'
 import { BottomNav } from './BottomNav.tsx'
 import { CommandPalette } from './CommandPalette.tsx'
@@ -37,11 +38,11 @@ export function AppShell() {
 
   return (
     <div className={`shell${alarmCollapsed ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}>
-      <Link className="brand" to={`/apps/events${search}`}>
-        <span className="brand-mark">T</span>
+      <Link className="brand" to={`/apps/events${search}`} title="T-ARCH · 시설을 돌보다">
+        <BrandMark />
         <span>
           <span className="brand-name">T-ARCH</span>
-          <span className="brand-sub">감시 · 헤드엔드는 현장에</span>
+          <span className="brand-sub">운영·유지보수</span>
         </span>
       </Link>
       <FilterBar

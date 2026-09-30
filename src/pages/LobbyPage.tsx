@@ -33,7 +33,7 @@ export function LobbyPage() {
       <div className="page-head">
         <div>
           <h1>로비 종합</h1>
-          <p>대스크린 1면 예외. 조회 전용이라 제어 버튼이 없습니다.</p>
+          <p>대스크린 1면. 붙은 계통의 예외만. 조회 전용이라 제어 버튼이 없습니다.</p>
         </div>
       </div>
       <div className="lobby-grid">

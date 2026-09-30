@@ -13,6 +13,8 @@ export function Bootstrap({ children }: { children: ReactNode }) {
     let cancelled = false
     void restoreSession().then((session) => {
       if (!cancelled) setState(session ? 'ready' : 'error')
+    }).catch(() => {
+      if (!cancelled) setState('error')
     })
     return () => {
       cancelled = true
@@ -33,7 +35,7 @@ export function Bootstrap({ children }: { children: ReactNode }) {
         <div className="panel">
           <h1>조회 API에 연결하지 못했습니다</h1>
           <p className="kpi-meta">
-            세션은 지웠습니다. <code>.env</code>의 <code>API_ORIGIN</code>이 중앙 조회 서버를 가리키는지 확인하십시오.
+            현장 목록을 받지 못했습니다. 다시 로그인하십시오.
           </p>
           <p>
             <a href="/login">로그인으로</a>

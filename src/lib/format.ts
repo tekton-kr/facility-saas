@@ -8,6 +8,7 @@ import type {
   Role,
   SiteKind,
   SitePreset,
+  SystemDomain,
   TimeRange,
   WorkKind,
   WorkStatus,
@@ -20,6 +21,18 @@ export const APP_LABEL: Record<AppId, string> = {
   solar: '태양광',
   parking: '주차',
   ev: 'EV',
+}
+
+export const DOMAIN_LABEL: Record<SystemDomain, string> = {
+  events: '이벤트',
+  power: '전력',
+  metering: '검침',
+  solar: '태양광',
+  parking: '주차',
+  ev: 'EV',
+  hvac: '자동제어',
+  fire: '소방',
+  security: '침입',
 }
 
 export const KIND_LABEL: Record<SiteKind, string> = {

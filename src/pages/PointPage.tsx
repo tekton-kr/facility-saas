@@ -1,8 +1,10 @@
 import { Link, Navigate } from 'react-router-dom'
 import { CertaintyBadge } from '../components/CertaintyBadge.tsx'
+import { CollectionPending } from '../components/CollectionPending.tsx'
 import { TrendChart } from '../components/TrendChart.tsx'
 import { getPoint } from '../lib/catalog.ts'
-import { APP_LABEL, formatDateTime, formatNumber } from '../lib/format.ts'
+import { isAppCollected, isDomainCollected } from '../lib/collection.ts'
+import { APP_LABEL, DOMAIN_LABEL, formatDateTime, formatNumber } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 
@@ -21,6 +23,21 @@ export function PointPage() {
         <h1>관제점을 찾을 수 없습니다</h1>
         <p><Link to={`/apps/${app}${search}`}>돌아가기</Link></p>
       </div>
+    )
+  }
+
+  if (!isAppCollected(app) || !isDomainCollected(found.system.domain)) {
+    return (
+      <>
+        <div className="crumbs">
+          <Link to={`/apps/${app}${search}`}>{APP_LABEL[app]}</Link>
+          <span>/</span>
+          <Link to={`/apps/${app}/sites/${found.site.id}${search}`}>{found.site.name}</Link>
+          <span>/</span>
+          <span>{found.point.name}</span>
+        </div>
+        <CollectionPending title={`${DOMAIN_LABEL[found.system.domain]} · 연동 대기`} />
+      </>
     )
   }
 
@@ -52,7 +69,7 @@ export function PointPage() {
       <div className="page-head">
         <div>
           <h1>{found.point.name}</h1>
-          <p>{found.equipment.name}</p>
+          <p>{found.system.name} · {found.equipment.name}</p>
         </div>
         <CertaintyBadge certainty={tel.certainty} />
       </div>

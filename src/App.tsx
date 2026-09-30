@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell.tsx'
+import { ToastHost } from './components/ToastHost.tsx'
 import { RequireAuth } from './components/RequireAuth.tsx'
 import { SiteGate } from './components/SiteGate.tsx'
 import { Bootstrap } from './bootstrap.tsx'
@@ -7,7 +8,11 @@ import { AppHome } from './pages/AppHome.tsx'
 import { EquipmentPage } from './pages/EquipmentPage.tsx'
 import { ForbiddenPage } from './pages/ForbiddenPage.tsx'
 import { LobbyPage } from './pages/LobbyPage.tsx'
-import { LoginPage } from './pages/LoginPage.tsx'
+import { DeskPage, LoginPage } from './pages/LoginPage.tsx'
+import { PasswordPage } from './pages/PasswordPage.tsx'
+import { NotifyPage } from './pages/NotifyPage.tsx'
+import { StationPage } from './pages/StationPage.tsx'
+import { WorkspacePage } from './pages/WorkspacePage.tsx'
 import { PointPage } from './pages/PointPage.tsx'
 import { QualityPage } from './pages/QualityPage.tsx'
 import { RoleHomeRedirect } from './pages/RoleHomeRedirect.tsx'
@@ -23,8 +28,15 @@ export default function App() {
   return (
     <Bootstrap>
       <BrowserRouter>
+        <ToastHost />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/login/password" element={<PasswordPage />} />
+          <Route path="/desk" element={<DeskPage />} />
+          <Route path="/station" element={<StationPage />} />
+          <Route path="/w" element={<WorkspacePage />} />
+          <Route path="/w/:slug" element={<WorkspacePage />} />
+          <Route path="/n/:token" element={<NotifyPage />} />
           <Route element={<RequireAuth />}>
             <Route element={<SiteGate />}>
             <Route element={<AppShell />}>

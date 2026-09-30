@@ -16,7 +16,7 @@ function loadDotEnv() {
 }
 
 loadDotEnv()
-const base = process.env.BASE_URL || process.env.API_ORIGIN || 'http://localhost:5173'
+const base = process.env.BASE_URL || 'http://localhost:5173'
 const email = process.env.CHECK_EMAIL || process.env.DEMO_OPS_EMAIL
 const password = process.env.CHECK_PASSWORD || process.env.DEMO_OPS_PASSWORD
 

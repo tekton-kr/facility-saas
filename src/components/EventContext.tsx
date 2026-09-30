@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createWorkFromAlarm, workByAlarm } from '../lib/field.ts'
+import { issueNotifyToken, notifyPath } from '../lib/notifyLink.ts'
 import { useField } from '../lib/useField.ts'
 import { useScope } from '../lib/useScope.ts'
 import type { Alarm, CameraRef, FloorPlan, SiteDef } from '../types/domain.ts'
@@ -17,6 +19,7 @@ export function EventContext({ selected, site, plan, cameras, search }: Props) {
   const { role } = useScope()
   useField()
   const existing = selected ? workByAlarm(selected.id) : undefined
+  const [notifyState, setNotifyState] = useState('')
 
   return (
     <>
@@ -44,18 +47,41 @@ export function EventContext({ selected, site, plan, cameras, search }: Props) {
           <>
             <p className="kpi-note">{selected.source}</p>
             <h3 className="subhead">관련 CCTV</h3>
+            <p className="kpi-meta">현장 VMS 연동 협의 중. 영상 아카이브는 보유하지 않습니다. 재생하지 않습니다.</p>
             {cameras.length === 0 ? (
-              <p className="kpi-meta">연결된 카메라가 없습니다. 영상 아카이브는 보유하지 않습니다.</p>
+              <p className="kpi-meta">이 알람에 자리만 있는 카메라가 없습니다.</p>
             ) : (
               cameras.map((camera) => (
-                <div key={camera.id} className="cctv-card">
+                <div key={camera.id} className="cctv-card is-pending">
                   <div className="cctv-tile" aria-hidden="true" />
                   <strong>{camera.name}</strong>
-                  <p className="kpi-meta">딥링크만 전달합니다. 재생·보관은 현장 VMS입니다.</p>
-                  <code>{camera.deepLink}</code>
+                  <p className="kpi-meta">협의 후 같은 자리에 딥링크가 붙습니다.</p>
                 </div>
               ))
             )}
+            {selected ? (
+              <p>
+                <button
+                  className="drawer-open"
+                  type="button"
+                  onClick={() => {
+                    void (async () => {
+                      try {
+                        const token = await issueNotifyToken(selected.id, selected.siteId)
+                        const url = `${window.location.origin}${notifyPath(token)}`
+                        await navigator.clipboard.writeText(url)
+                        setNotifyState('알림 링크를 복사했습니다. 휴대폰은 이 주소가 문입니다.')
+                      } catch {
+                        setNotifyState('링크를 복사하지 못했습니다.')
+                      }
+                    })()
+                  }}
+                >
+                  알림 링크
+                </button>
+                {notifyState ? <span className="kpi-meta"> {notifyState}</span> : null}
+              </p>
+            ) : null}
             {role === 'ops' && selected ? (
               <p>
                 {existing ? (
@@ -69,7 +95,7 @@ export function EventContext({ selected, site, plan, cameras, search }: Props) {
                       navigate(`/work/${created.id}${search}`)
                     }}
                   >
-                    출동 작업
+                    예외에서 작업
                   </button>
                 )}
               </p>

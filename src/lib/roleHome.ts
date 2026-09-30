@@ -1,8 +1,7 @@
 import type { AppId, Kpi, TimeRange } from '../types/domain.ts'
-import { siteHasApp } from './catalog.ts'
-import { visibleSites } from './siteScope.ts'
-import { contractsDueSoon, openSlaCount, packagesForScope } from './field.ts'
-import { findingsForScope } from './findings.ts'
+import { listPoints, siteHasApp } from './catalog.ts'
+import { isAppCollected } from './collection.ts'
+import { visibleSiteIds, visibleSites } from './siteScope.ts'
 import { siteCards, type SiteCardModel } from './portfolio.ts'
 import { alarmsForScope, kpisForScope, lastSyncAt } from './telemetry.ts'
 
@@ -79,71 +78,44 @@ export function portfolioHeadline(
   }
 }
 
-export function execKpis(options: { app: AppId; siteId?: string; range: TimeRange }): Kpi[] {
-  const receivedAt = lastSyncAt()
-  const exceptionCards = exceptionSiteCards({ app: options.app === 'events' ? 'events' : options.app, range: options.range })
-  const alarms = alarmsForScope({
+export function evidenceKpis(options: { app: AppId; siteId?: string; range: TimeRange }): Kpi[] {
+  if (!isAppCollected(options.app) || options.app === 'events') return []
+
+  const domain = kpisForScope(options)
+  const measured = domain.filter((item) => item.id !== 'saving' && item.id !== 'pr')
+  const estimate = domain.find((item) => item.id === 'saving' || item.id === 'pr')
+  const gaps = listPoints({
     siteId: options.siteId,
-    app: options.app === 'events' ? 'events' : options.app,
-  })
-  const open = alarms.filter((item) => item.severity === 'critical' || item.severity === 'warning').length
-  const savings = findingsForScope({ app: options.app, siteId: options.siteId })
-    .reduce((sum, item) => sum + (item.estimatedSaving ?? 0), 0)
+    siteIds: options.siteId ? undefined : visibleSiteIds(),
+    app: options.app === 'solar' ? 'solar' : 'metering',
+  }).filter((row) => row.point.flags?.noTelemetry).length
+  const missingArea = (options.siteId ? [options.siteId] : visibleSiteIds())
+    .map((id) => visibleSites().find((site) => site.id === id))
+    .filter((site) => site && site.areaM2 == null).length
 
-  const exceptionKpi: Kpi = {
-    id: 'exceptions',
-    label: options.siteId ? '열린 예외' : '이상 현장',
-    value: options.siteId ? open : exceptionCards.length,
-    unit: options.siteId ? '건' : '곳',
-    certainty: 'confirmed',
-    receivedAt,
+  const items: Kpi[] = [...measured.slice(0, 3)]
+  if (gaps > 0) {
+    items.push({
+      id: 'gaps',
+      label: '검침 공백',
+      value: gaps,
+      unit: '점',
+      certainty: 'unknown',
+      receivedAt: lastSyncAt(),
+      note: '0으로 채우지 않음',
+    })
   }
-  const savingKpi: Kpi = {
-    id: 'finding-saving',
-    label: '추정 절감',
-    value: savings > 0 ? savings : null,
-    unit: '천원',
-    certainty: savings > 0 ? 'estimate' : 'unknown',
-    receivedAt,
-    note: '요금제·계수 가정. 보장이 아님',
+  if (missingArea > 0 && options.app === 'power') {
+    items.push({
+      id: 'area',
+      label: '면적 없음',
+      value: missingArea,
+      unit: '곳',
+      certainty: 'unknown',
+      receivedAt: lastSyncAt(),
+      note: 'EUI 판정 불가',
+    })
   }
-  const contractKpi: Kpi = {
-    id: 'contracts-due',
-    label: '계약 만료',
-    value: contractsDueSoon(options.siteId),
-    unit: '곳',
-    certainty: 'confirmed',
-    receivedAt,
-    note: '120일 안',
-  }
-  const slaKpi: Kpi = {
-    id: 'sla-open',
-    label: '미닫힌 SLA',
-    value: openSlaCount(options.siteId),
-    unit: '건',
-    certainty: 'confirmed',
-    receivedAt,
-  }
-  const packageKpi: Kpi = {
-    id: 'packages',
-    label: '공사 후보',
-    value: packagesForScope(options.siteId).filter((item) => item.status !== 'done').length,
-    unit: '건',
-    certainty: 'confirmed',
-    receivedAt,
-  }
-
-  if (options.app === 'events') {
-    return [
-      exceptionKpi,
-      slaKpi,
-      contractKpi,
-      packageKpi,
-      savingKpi,
-    ].slice(0, 6)
-  }
-
-  const domain = kpisForScope(options).filter((item) => item.id !== 'saving').slice(0, 3)
-  const saving = kpisForScope(options).find((item) => item.id === 'saving') ?? savingKpi
-  return [...domain, exceptionKpi, contractKpi, packageKpi, saving].slice(0, 6)
+  if (estimate) items.push(estimate)
+  return items.slice(0, 6)
 }

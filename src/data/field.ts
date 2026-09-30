@@ -13,8 +13,8 @@ export const vendors: Vendor[] = [
 ]
 
 export const accounts: DirectoryAccount[] = [
-  { email: 'ops@t-arch', name: '김현장', role: 'ops', siteScope: '근무 현장' },
-  { email: 'exec@t-arch', name: '박경영', role: 'exec', siteScope: '포트폴리오' },
+  { email: 'ops@t-arch', name: '김현장', role: 'ops', siteScope: '하남 본사' },
+  { email: 'exec@t-arch', name: '박경영', role: 'exec', siteScope: '하남 본사 · 하남 열원' },
   { email: 'vendor@t-arch', name: '이협력', role: 'vendor', siteScope: '배정 작업만' },
 ]
 
@@ -98,18 +98,17 @@ export const works: WorkOrder[] = [
   {
     id: 'wo-1840',
     siteId: 'suwon-off',
-    alarmId: 'a-fire-suwon',
     contractId: 'c-suwon',
-    vendorId: 'v-fire',
+    vendorId: 'v-gyeonggi',
     kind: 'dispatch',
-    title: '2구역 화재 알람 확인',
+    title: '임차 구간 검침 공백 확인',
     status: 'received',
     slaDueAt: '2026-09-10T20:23:00+09:00',
     createdAt: '2026-09-10T19:53:00+09:00',
-    systemId: 'fire',
-    equipmentId: 'facp',
-    pointId: 'z2',
-    note: '수신기 상태만 확인. 소화 제어 없음.',
+    systemId: 'power',
+    equipmentId: 'incomer',
+    pointId: 'tenant',
+    note: '실측 없음. 0으로 채우지 않음. 설정값 변경 없음.',
     proofs: [],
     arrivedAt: null,
   },

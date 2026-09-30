@@ -1,5 +1,6 @@
 import { CertaintyBadge } from '../components/CertaintyBadge.tsx'
 import { listPoints } from '../lib/catalog.ts'
+import { isDomainCollected } from '../lib/collection.ts'
 import { visibleSiteIds, visibleSites } from '../lib/siteScope.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
@@ -8,7 +9,7 @@ import { formatDateTime, formatNumber } from '../lib/format.ts'
 
 export function QualityPage() {
   const { range, view } = useScope()
-  const rows = listPoints({ siteIds: visibleSiteIds() })
+  const rows = listPoints({ siteIds: visibleSiteIds() }).filter((row) => isDomainCollected(row.system.domain))
   const findings = findingsForScope({ app: 'events' })
   const confirmed = rows.filter((row) => getTelemetry(row, range).certainty === 'confirmed')
   const unknown = rows.filter((row) => {
@@ -28,7 +29,7 @@ export function QualityPage() {
       <div className="page-head">
         <div>
           <h1>{view === 'unknown' ? '판정 불가 모음' : '데이터 품질'}</h1>
-          <p>빈 값은 0으로 채우지 않습니다. 지연·두절·공백을 성격 배지로 구분합니다.</p>
+          <p>빈 값은 0으로 채우지 않습니다. 지연·두절·공백을 성격 배지로 구분합니다. 연동 대기 계통은 이 숫자에 넣지 않습니다.</p>
         </div>
       </div>
       <section className="kpi-row">
@@ -65,6 +66,10 @@ export function QualityPage() {
             )
           })}
         </div>
+      </section>
+      <section className="deck">
+        <h2>연동 대기</h2>
+        <p className="kpi-meta">소방·CCTV·주차·EV·엘리베이터는 수집 전입니다. 판정 불가 점 수에 넣지 않습니다.</p>
       </section>
       {view === 'unknown' ? (
         <>

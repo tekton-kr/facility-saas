@@ -1,5 +1,6 @@
 import type { Alarm, AppId, Kpi, PointRef, QuerySnapshot, Telemetry, TimeRange } from '../types/domain.ts'
-import { getPoint, getSite, listPoints, pointKey } from './catalog.ts'
+import { getPoint, getSite, getSystem, listPoints, pointKey } from './catalog.ts'
+import { isAlarmKindCollected, isDomainCollected } from './collection.ts'
 import { isSiteAllowed, visibleSiteIds, visibleSites } from './siteScope.ts'
 import { isBrowser } from './env.ts'
 
@@ -52,6 +53,20 @@ const missingTel: Telemetry = {
   note: '조회 API 미수신',
 }
 
+const pendingTel: Telemetry = {
+  current: null,
+  receivedAt: null,
+  series: null,
+  certainty: 'unknown',
+  note: '연동 협의 중. 0으로 채우지 않습니다.',
+}
+
+function uncollectedTelemetry(ref: PointRef): Telemetry | undefined {
+  const found = getPoint(ref)
+  if (!found || isDomainCollected(found.system.domain)) return undefined
+  return pendingTel
+}
+
 let queryHydrated = false
 let telemetryCache = new Map<string, Telemetry>()
 let alarmCache: Alarm[] | null = null
@@ -78,6 +93,8 @@ export function applyStreamTick(update: {
 }
 
 export function generateTelemetry(ref: PointRef, range: TimeRange): Telemetry {
+  const blocked = uncollectedTelemetry(ref)
+  if (blocked) return blocked
   const found = getPoint(ref)
   if (!found) {
     return {
@@ -127,6 +144,8 @@ export function generateTelemetry(ref: PointRef, range: TimeRange): Telemetry {
 }
 
 export function getTelemetry(ref: PointRef, range: TimeRange): Telemetry {
+  const blocked = uncollectedTelemetry(ref)
+  if (blocked) return blocked
   if (queryHydrated) {
     return telemetryCache.get(telCacheKey(ref, range)) ?? missingTel
   }
@@ -434,6 +453,11 @@ export function generateAlarms(): Alarm[] {
 export function alarmsForScope(options: { siteId?: string; app?: AppId }): Alarm[] {
   const all = queryHydrated && alarmCache ? alarmCache : generateAlarms()
   return all.filter((alarm) => {
+    if (!isAlarmKindCollected(alarm.kind)) return false
+    if (alarm.systemId) {
+      const found = getSystem(alarm.siteId, alarm.systemId)
+      if (found && !isDomainCollected(found.system.domain)) return false
+    }
     if (!isSiteAllowed(alarm.siteId)) return false
     if (options.siteId && alarm.siteId !== options.siteId) return false
     if (options.app && options.app !== 'events') {

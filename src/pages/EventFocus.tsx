@@ -1,7 +1,7 @@
 import { EventContext } from '../components/EventContext.tsx'
 import { DataTable } from '../components/DataTable.tsx'
 import { TimeWindow } from '../components/TimeWindow.tsx'
-import { connectorById, getSite } from '../lib/catalog.ts'
+import { getSite } from '../lib/catalog.ts'
 import { formatDateTime, KIND_ALARM_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
 import { alarmInRange, alarmsForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
@@ -76,16 +76,15 @@ export function EventFocus() {
         <div className="page-head">
           <div>
             <h1>{site?.name} · CCTV 링크</h1>
-            <p>딥링크만 전달합니다. 영상 아카이브는 보유하지 않습니다.</p>
+            <p>현장 VMS 연동 협의 중. 영상 아카이브는 보유하지 않습니다. 재생하지 않습니다.</p>
           </div>
         </div>
         <section className="panel">
-          {cameras.length === 0 ? <div className="empty">카메라 링크가 없습니다.</div> : null}
+          {cameras.length === 0 ? <div className="empty">카메라 자리가 없습니다.</div> : null}
           {cameras.map((camera) => (
-            <div key={camera.id} className="cctv-card">
+            <div key={camera.id} className="cctv-card is-pending">
               <strong>{camera.name}</strong>
-              <p className="kpi-meta">커넥터 {site?.connectorIds.map((id) => connectorById(id)?.name).join(' · ')}</p>
-              <code>{camera.deepLink}</code>
+              <p className="kpi-meta">협의 후 같은 자리에 딥링크가 붙습니다.</p>
             </div>
           ))}
         </section>

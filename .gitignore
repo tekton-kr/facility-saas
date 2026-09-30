@@ -144,9 +144,26 @@ vite.config.ts.timestamp-*
 dist-ssr
 *.local
 
-# Local docs / images — keep out of git
+# Local docs, reference photos, decks. Not the app.
 docs/
 images/
+benchmark/
+captures/
+*.pptx
+*.ppt
+*.docx
+*.pdf
+*.webp
+
+# One-off deck builder and earlier login photo tries.
+scripts/build-t-arch-pr.py
+__pycache__/
+*.py[cod]
+public/login-*.jpg
+!public/login-bright-*.jpg
+
+# Hosting / tool caches
+.netlify/
 
 # OS
 .DS_Store
@@ -182,6 +199,10 @@ tmp/
 *.key
 *.p12
 *.pfx
+credentials.json
+*.secret
+.env.local
+.env.*.local
 
 # Test / e2e artifacts
 test-results/

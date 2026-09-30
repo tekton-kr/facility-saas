@@ -1,61 +1,117 @@
 import { dutySiteId } from './roleHome.ts'
-import { hydrateSnapshot } from './api.ts'
-import { buildLocalSnapshot, mockLogin } from './mockQuery.ts'
+import { changePassword, fetchSites, hydrateSnapshot, loginRequest, type LoginResult } from './api.ts'
+import { buildLocalSnapshot } from './mockQuery.ts'
+import { getCatalog } from './catalog.ts'
+import { getStation } from './station.ts'
+import { lookupStaff } from './staffRoster.ts'
+import { contractedSiteIds, getTenant, tenantBySiteId } from './tenant.ts'
+import { getSite } from './catalog.ts'
+import type { TenantDef } from '../data/tenants.ts'
 
 const KEY = 't-arch-session'
 const TOKEN_KEY = 't-arch-token'
 const EVENT = 't-arch-auth'
+const NOTIFY_MS = 4 * 60 * 60 * 1000
+const TOKEN_MS = 12 * 60 * 60 * 1000
+
+export type Entry = 'station' | 'workspace' | 'notify' | 'staff' | 'command'
 
 export type Session = {
-  email: string
+  tenantId: string
   name: string
   role: 'ops' | 'exec'
   siteIds: string[]
+  entry: Entry
+  phone?: string
+  expiresAt?: string
+  mustChangePassword?: boolean
 }
 
-export function getToken(): string | null {
+function readStore(key: string): string | null {
   try {
-    return sessionStorage.getItem(TOKEN_KEY)
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key)
   } catch {
     return null
   }
 }
 
-export function setToken(token: string | null) {
+function writeStore(key: string, value: string | null) {
   try {
-    if (token) sessionStorage.setItem(TOKEN_KEY, token)
-    else sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(key)
+    if (value) localStorage.setItem(key, value)
+    else localStorage.removeItem(key)
   } catch {
     /* ignore */
   }
 }
 
-export function homePath(role: Session['role']): string {
-  if (role === 'exec') return '/apps/power?role=exec'
-  return `/apps/events/sites/${dutySiteId('events')}`
+export function getToken(): string | null {
+  return readStore(TOKEN_KEY)
+}
+
+export function setToken(token: string | null) {
+  writeStore(TOKEN_KEY, token)
+}
+
+export function isCommand(session: Session | null | undefined): boolean {
+  return session?.entry === 'command'
+}
+
+export function homePath(input: Session | Session['role'] = 'ops'): string {
+  if (typeof input !== 'string' && input.entry === 'command') return '/apps/events'
+  const role = typeof input === 'string' ? input : input.role
+  const siteIds = typeof input === 'string' ? undefined : input.siteIds
+  if (role === 'exec') {
+    if (siteIds?.length === 1) return `/apps/power/sites/${siteIds[0]}?role=exec`
+    return '/apps/power?role=exec'
+  }
+  const site = siteIds?.[0] ?? dutySiteId('events')
+  return `/apps/events/sites/${site}`
+}
+
+export function notifyHome(siteId: string, alarmId: string): string {
+  return `/apps/events/sites/${siteId}?event=${encodeURIComponent(alarmId)}`
 }
 
 export function safeNext(value: string | null): string | null {
   if (!value) return null
   if (!value.startsWith('/')) return null
-  if (value.startsWith('//') || value.startsWith('/login')) return null
+  if (value.startsWith('//') || value.startsWith('/login') || value.startsWith('/w') || value.startsWith('/n') || value.startsWith('/station')) {
+    return null
+  }
   return value
 }
 
 export function getSession(): Session | null {
   try {
     if (!getToken()) return null
-    const raw = sessionStorage.getItem(KEY)
+    const raw = readStore(KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Session
-    if (!parsed.email || (parsed.role !== 'ops' && parsed.role !== 'exec')) return null
-    const stored = Array.isArray(parsed.siteIds)
-      ? parsed.siteIds.filter((id): id is string => typeof id === 'string')
-      : []
-    const siteIds = stored.length > 0 ? stored : mockLogin(parsed.email).siteIds
-    const session = { email: parsed.email, name: parsed.name, role: parsed.role, siteIds }
-    if (stored.length === 0) sessionStorage.setItem(KEY, JSON.stringify(session))
-    return session
+    if (!parsed.tenantId || (parsed.role !== 'ops' && parsed.role !== 'exec')) return null
+    if (parsed.entry !== 'station' && parsed.entry !== 'workspace' && parsed.entry !== 'notify' && parsed.entry !== 'staff' && parsed.entry !== 'command') return null
+    if (parsed.expiresAt && Date.parse(parsed.expiresAt) <= Date.now()) {
+      setToken(null)
+      writeStore(KEY, null)
+      return null
+    }
+    const tenant = getTenant(parsed.tenantId)
+    if (!tenant) return null
+    if (parsed.entry === 'command') {
+      const siteIds = contractedSiteIds()
+      if (siteIds.length === 0) return null
+      return { ...parsed, role: 'ops', siteIds }
+    }
+    if (parsed.entry === 'staff') {
+      if (!parsed.phone) return null
+      const row = lookupStaff(parsed.phone)
+      const siteIds = (parsed.siteIds ?? []).filter((id) => id.length > 0)
+      if (siteIds.length === 0) return null
+      return { ...parsed, name: row?.name || parsed.name, siteIds, phone: parsed.phone }
+    }
+    const siteIds = (parsed.siteIds ?? []).filter((id) => id.length > 0)
+    if (siteIds.length === 0) return null
+    return { ...parsed, siteIds }
   } catch {
     return null
   }
@@ -66,38 +122,190 @@ function emit() {
 }
 
 export function setSession(session: Session | null) {
-  if (session) sessionStorage.setItem(KEY, JSON.stringify(session))
-  else sessionStorage.removeItem(KEY)
+  writeStore(KEY, session ? JSON.stringify(session) : null)
   emit()
 }
 
-function establish(result: { token: string; email: string; name: string; role: Session['role']; siteIds: string[] }): Session {
-  setToken(result.token)
-  hydrateSnapshot(buildLocalSnapshot())
-  const session = {
-    email: result.email,
-    name: result.name,
-    role: result.role,
-    siteIds: result.siteIds,
+function ttlMs(entry: Entry): number | null {
+  if (entry === 'notify') return NOTIFY_MS
+  return null
+}
+
+function newToken(): string {
+  return crypto.randomUUID()
+}
+
+function establish(session: Session): Session {
+  const ttl = ttlMs(session.entry)
+  const signed = {
+    ...session,
+    expiresAt: session.expiresAt ?? (ttl == null ? undefined : new Date(Date.now() + ttl).toISOString()),
   }
-  setSession(session)
-  return session
+  setToken(newToken())
+  hydrateSnapshot(buildLocalSnapshot())
+  setSession(signed)
+  return signed
 }
 
-export async function signIn(email: string, _password: string): Promise<Session> {
-  return establish(mockLogin(email))
+export function startStation(): Session {
+  const binding = getStation()
+  if (!binding) throw new Error('이 PC에 현장이 고정되어 있지 않습니다.')
+  const tenant = getTenant(binding.tenantId)
+  const site = getSite(binding.siteId)
+  if (!tenant || !site) throw new Error('고정된 현장을 찾을 수 없습니다.')
+  return establish({
+    tenantId: tenant.id,
+    name: site.name,
+    role: 'ops',
+    siteIds: [site.id],
+    entry: 'station',
+  })
 }
 
-export async function signInDemo(email: string): Promise<Session> {
-  return establish(mockLogin(email))
+export function startWorkspace(tenant: TenantDef, siteIds: string[], name = tenant.name): Session {
+  return startExec({ tenant, name, siteIds })
+}
+
+export function startExec(input: { tenant: TenantDef; name?: string; siteIds: string[] }): Session {
+  const siteIds = input.siteIds.filter((id) => input.tenant.siteIds.includes(id) && getSite(id))
+  if (siteIds.length === 0) throw new Error('배정된 현장이 없습니다.')
+  return establish({
+    tenantId: input.tenant.id,
+    name: input.name ?? input.tenant.name,
+    role: 'exec',
+    siteIds,
+    entry: 'workspace',
+  })
+}
+
+export function startCommand(input: { name: string }): Session {
+  const siteIds = contractedSiteIds()
+  if (siteIds.length === 0) throw new Error('계약된 현장이 없습니다.')
+  const tenant = getTenant('tekton')
+  if (!tenant) throw new Error('운영 계정을 찾을 수 없습니다.')
+  return establish({
+    tenantId: tenant.id,
+    name: input.name,
+    role: 'ops',
+    siteIds,
+    entry: 'command',
+  })
+}
+
+export function startStaff(input: { tenantId: string; name: string; siteIds: string[]; phone: string }): Session {
+  const row = lookupStaff(input.phone)
+  if (!row) throw new Error('이 번호는 현장에 없습니다. 소장님에게 연락처 등록을 요청하십시오.')
+  const siteIds = input.siteIds.filter((id) => row.siteIds.includes(id) && getSite(id))
+  const chosen = siteIds.length > 0 ? siteIds : row.siteIds
+  return establish({
+    tenantId: row.tenantId,
+    name: row.name,
+    role: 'ops',
+    siteIds: chosen,
+    entry: 'staff',
+    phone: row.phone,
+  })
+}
+
+export function startNotify(alarmId: string, siteId: string): Session {
+  const tenant = tenantBySiteId(siteId)
+  const site = getSite(siteId)
+  if (!tenant || !site) throw new Error('이 알림의 현장을 찾을 수 없습니다.')
+  void alarmId
+  return establish({
+    tenantId: tenant.id,
+    name: site.name,
+    role: 'ops',
+    siteIds: [site.id],
+    entry: 'notify',
+  })
+}
+
+let issuedPassword = ''
+
+async function applyLiveSites(preferred: string[] | undefined): Promise<string[]> {
+  const sites = await fetchSites()
+  hydrateSnapshot({
+    catalog: { connectors: getCatalog().connectors, sites },
+    alarms: [],
+    findings: [],
+    telemetry: {},
+    syncAt: new Date().toISOString(),
+  })
+  const known = new Set(sites.map((site) => site.id))
+  const listed = (preferred ?? []).filter((id) => known.has(id))
+  return listed.length > 0 ? listed : sites.map((site) => site.id)
+}
+
+export async function acceptLogin(result: LoginResult, extra: { phone?: string; currentPassword?: string; entry: Entry }): Promise<Session> {
+  const tenant = getTenant(result.tenantId ?? 'tekton') ?? getTenant('tekton')
+  if (!tenant) throw new Error('고객사를 찾을 수 없습니다.')
+  issuedPassword = result.mustChangePassword ? (extra.currentPassword ?? '') : ''
+  setToken(result.token)
+  try {
+    const siteIds = await applyLiveSites(result.siteIds)
+    const session: Session = {
+      tenantId: tenant.id,
+      name: result.name || result.email,
+      role: result.role,
+      siteIds,
+      entry: extra.entry,
+      phone: extra.phone,
+      expiresAt: new Date(Date.now() + TOKEN_MS).toISOString(),
+      mustChangePassword: result.mustChangePassword,
+    }
+    setSession(session)
+    return session
+  } catch (err) {
+    setToken(null)
+    throw err
+  }
+}
+
+export async function signIn(email: string, password: string): Promise<Session> {
+  const result = await loginRequest(email.trim(), password)
+  if (result.apiRole !== 'MANAGEMENT') throw new Error('관리단·건물주 계정이 아닙니다.')
+  return acceptLogin(result, { currentPassword: password, entry: 'workspace' })
+}
+
+export async function signInCommand(email: string, password: string): Promise<Session> {
+  const result = await loginRequest(email.trim(), password)
+  if (result.apiRole !== 'SUPER_ADMIN') throw new Error('통합관제 계정이 아닙니다.')
+  return acceptLogin(result, { currentPassword: password, entry: 'command' })
+}
+
+export async function finishPasswordChange(newPassword: string): Promise<Session> {
+  const session = getSession()
+  if (!session?.mustChangePassword) throw new Error('비밀번호를 바꿀 로그인이 없습니다.')
+  if (!issuedPassword) throw new Error('임시 비밀번호로 다시 로그인하십시오.')
+  await changePassword(issuedPassword, newPassword)
+  issuedPassword = ''
+  const next = { ...session, mustChangePassword: false }
+  setSession(next)
+  return next
 }
 
 let logoutAt = 0
+let logoutTo = '/login'
 
 export function signOut() {
+  const session = getSession()
+  logoutTo = session?.entry === 'command' ? '/desk' : '/login'
+  if (session && session.entry !== 'command') {
+    try {
+      localStorage.setItem('t-arch-login-door', session.role === 'exec' ? 'exec' : 'staff')
+    } catch {
+      /* ignore */
+    }
+  }
   logoutAt = Date.now()
+  issuedPassword = ''
   setToken(null)
   setSession(null)
+}
+
+export function logoutTarget() {
+  return logoutTo
 }
 
 export function isLogoutRedirect() {
@@ -119,10 +327,18 @@ export function subscribeAuth(onChange: () => void) {
 export async function restoreSession(): Promise<Session | null> {
   const session = getSession()
   if (!session || !getToken()) return null
-  hydrateSnapshot(buildLocalSnapshot())
-  return session
+  const siteIds = await applyLiveSites(session.siteIds)
+  const next = { ...session, siteIds }
+  setSession(next)
+  return next
 }
 
 export function watchStream(_onTick: () => void): () => void {
   return () => {}
+}
+
+export function leaveLabel(entry: Entry | undefined): string {
+  if (entry === 'station') return '교대 종료'
+  if (entry === 'notify') return '닫기'
+  return '로그아웃'
 }

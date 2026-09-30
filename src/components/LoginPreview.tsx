@@ -1,88 +1,111 @@
-import { useEffect, useState } from 'react'
-import { formatTime } from '../lib/format.ts'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { usePrefersReducedMotion } from '../lib/media.ts'
-import { lastSyncAt } from '../lib/telemetry.ts'
 
-const STEP_MS = 4500
-const MAX_TICK = 3
+export type LoginDoor = 'exec' | 'staff'
+
+const ROOMS = [
+  {
+    src: '/img/login-bright-swgr.jpg',
+    position: 'center',
+    place: '수변전실',
+    name: '전력',
+    accent: '#7dd3fc',
+    points: ['수전 전력을 실시간으로 봅니다', '이상 현장만 골라 냅니다', '기간을 바꿔 비교합니다'],
+  },
+  {
+    src: '/img/login-bright-pump.jpg',
+    position: 'center',
+    place: '기계실',
+    name: '열원',
+    accent: '#5eead4',
+    points: ['펌프 운전을 봅니다', '출구온도 추세를 엽니다', '야간 운전을 짚습니다'],
+  },
+  {
+    src: '/img/login-bright-air.jpg',
+    position: 'center',
+    place: '공조기',
+    name: '공조',
+    accent: '#86efac',
+    points: ['급기온도 이탈을 봅니다', '알람이 난 설비를 엽니다', '운전 상태를 확인합니다'],
+  },
+  {
+    src: '/img/login-bright-fp.jpg',
+    position: 'center',
+    place: '소방펌프',
+    name: '이벤트',
+    accent: '#fdba74',
+    points: ['위험과 주의를 나눕니다', '발생한 위치를 봅니다', '같은 알람의 이력을 엽니다'],
+  },
+  {
+    src: '/img/login-bright-eg.jpg',
+    position: 'center',
+    place: '비상발전기',
+    name: '감시',
+    accent: '#c4b5fd',
+    points: ['수신이 끊기면 바로 보입니다', '대기 전원 상태를 남깁니다', '붙은 계통만 색이 납니다'],
+  },
+  {
+    src: '/img/login-bright-park.jpg',
+    position: 'center',
+    place: '주차장',
+    name: '현장',
+    accent: '#fde68a',
+    points: ['배정된 현장만 들어갑니다', '예외가 없는 곳은 무채색입니다', '현장에서 작업으로 이어갑니다'],
+  },
+  {
+    src: '/img/login-bright-roof.jpg',
+    position: 'center',
+    place: '옥상설비',
+    name: '리포트',
+    accent: '#93c5fd',
+    points: ['사용량과 발전을 한자리에 둡니다', '기간 요약을 읽습니다', '추정과 실측을 구분합니다'],
+  },
+] as const
+
+const DWELL_MS = 7200
 
 export function LoginPreview() {
-  const reduced = usePrefersReducedMotion()
-  const [tick, setTick] = useState(0)
-  const arrived = reduced || tick >= 1
-  const clock = formatTime(new Date(new Date(lastSyncAt()).getTime() + tick * 60_000).toISOString())
+  const reduce = usePrefersReducedMotion()
+  const [index, setIndex] = useState(0)
 
   useEffect(() => {
-    if (reduced) return
-    let id = 0
-    const start = () => {
-      id = window.setInterval(() => {
-        setTick((value) => (value + 1) % MAX_TICK)
-      }, STEP_MS)
-    }
-    const stop = () => window.clearInterval(id)
-    const onVisibility = () => {
-      stop()
-      if (!document.hidden) start()
-    }
-    if (!document.hidden) start()
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      stop()
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [reduced])
+    if (reduce) return
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % ROOMS.length)
+    }, DWELL_MS)
+    return () => window.clearInterval(timer)
+  }, [reduce])
 
   return (
     <aside className="login-preview" aria-hidden="true">
       <div className="login-stage">
         <figure className="login-stage-photo">
-          <img src="/login-plant.jpg" alt="" />
+          {ROOMS.map((room, i) => (
+            <img
+              key={room.src}
+              src={room.src}
+              alt=""
+              className={i === index ? 'is-on' : undefined}
+              style={{ objectPosition: room.position }}
+            />
+          ))}
         </figure>
-        <div className="login-window">
-          <div className="login-window-bar">
-            <span />
-            <span />
-            <span />
-            <em>T-ARCH · 이벤트</em>
-            <time className="login-window-clock">{clock}</time>
-          </div>
-          <div className="login-window-body">
-            <div className="login-window-kpis">
-              <div>
-                <small>위험</small>
-                <strong key={arrived ? 2 : 1} className={!reduced && arrived ? 'is-tick' : undefined}>
-                  {arrived ? 2 : 1}
-                </strong>
-              </div>
-              <div>
-                <small>주의</small>
-                <strong>3</strong>
-              </div>
-            </div>
-            <div className="login-window-split">
-              <ul>
-                {arrived ? (
-                  <li className={`is-critical${reduced ? '' : ' is-enter'}`}>2구역 화재 알람</li>
-                ) : null}
-                <li className="is-warning">수전 통신 두절</li>
-                <li>1층 침입 감지</li>
-              </ul>
-            </div>
+        <div className="login-stage-copy" style={{ '--slide-accent': ROOMS[index].accent } as CSSProperties}>
+          <p className="login-verse">
+            <small key={ROOMS[index].place}>{ROOMS[index].place}</small>
+            <strong key={ROOMS[index].name}>{ROOMS[index].name}</strong>
+          </p>
+          <ul className="login-points" key={ROOMS[index].name}>
+            {ROOMS[index].points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+          <div className="login-progress">
+            {ROOMS.map((room, i) => (
+              <span key={room.src} className={i === index ? 'is-on' : undefined} />
+            ))}
           </div>
         </div>
-        <div className="login-float">
-          <div className="login-float-top">
-            <small>추정 절감</small>
-            <span className="badge is-estimate">추정</span>
-          </div>
-          <strong>1.2<b>백만원</b></strong>
-          <small className="login-float-note">요금제·계수 가정. 보장이 아님</small>
-        </div>
-        <p className="login-caption">
-          하남 본사 · {arrived ? '2층' : '전기실'}
-          <span>실측 수신 {clock}</span>
-        </p>
       </div>
     </aside>
   )

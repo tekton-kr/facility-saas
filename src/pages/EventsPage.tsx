@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { AlarmCards } from '../components/AlarmCards.tsx'
+import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
+import { SiteDashboard } from '../components/SiteDashboard.tsx'
 import { DataTable } from '../components/DataTable.tsx'
 import { EventContext } from '../components/EventContext.tsx'
 import { EventFilters } from '../components/EventFilters.tsx'
@@ -20,7 +22,7 @@ import { EventFocus } from './EventFocus.tsx'
 export function EventsPage() {
   const navigate = useNavigate()
   const compact = useCompact()
-  const { siteId, eventId, query, range, severity, kind, role, search, view, eventHref, patchParams } = useScope()
+  const { siteId, eventId, query, range, severity, kind, role, command, search, view, eventHref, patchParams } = useScope()
   const alarms = alarmsForScope({ siteId, app: 'events' })
     .filter((alarm) => {
       if (!alarmInRange(alarm.at, range)) return false
@@ -41,37 +43,55 @@ export function EventsPage() {
   const headline = featuredAlarm({ app: 'events', siteId })
   const mobileDetail = compact && Boolean(eventId && selected)
 
-  const columns = useMemo<ColumnDef<Alarm, unknown>[]>(() => [
-    {
-      accessorKey: 'severity',
-      header: '심각도',
-      cell: ({ row }) =>
-        row.original.severity === 'info' ? (
-          <span className="mono-source">{SEVERITY_LABEL.info}</span>
-        ) : (
-          <span className={`badge is-${row.original.severity}`}>{SEVERITY_LABEL[row.original.severity]}</span>
-        ),
-    },
-    {
-      accessorKey: 'kind',
-      header: '종류',
-      cell: ({ row }) => <span className="mono-source">{KIND_ALARM_LABEL[row.original.kind]}</span>,
-    },
-    {
-      accessorKey: 'title',
-      header: '알람',
-    },
-    {
-      accessorKey: 'at',
-      header: '시각',
-      cell: ({ row }) => <span className="mono-time">{formatDateTime(row.original.at)}</span>,
-    },
-    {
-      accessorKey: 'source',
-      header: '출처',
-      cell: ({ row }) => <span className="mono-source">{formatSource(row.original.source)}</span>,
-    },
-  ], [])
+  const columns = useMemo<ColumnDef<Alarm, unknown>[]>(() => {
+    const siteCol: ColumnDef<Alarm, unknown>[] = siteId
+      ? []
+      : [{
+          accessorKey: 'siteId',
+          header: '현장',
+          cell: ({ row }) => <span>{getSite(row.original.siteId)?.name ?? row.original.siteId}</span>,
+        }]
+    return [
+      ...siteCol,
+      {
+        accessorKey: 'severity',
+        header: '심각도',
+        cell: ({ row }) =>
+          row.original.severity === 'info' ? (
+            <span className="mono-source">{SEVERITY_LABEL.info}</span>
+          ) : (
+            <span className={`badge is-${row.original.severity}`}>{SEVERITY_LABEL[row.original.severity]}</span>
+          ),
+      },
+      {
+        accessorKey: 'kind',
+        header: '종류',
+        cell: ({ row }) => <span className="mono-source">{KIND_ALARM_LABEL[row.original.kind]}</span>,
+      },
+      {
+        accessorKey: 'title',
+        header: '알람',
+      },
+      {
+        accessorKey: 'at',
+        header: '시각',
+        cell: ({ row }) => <span className="mono-time">{formatDateTime(row.original.at)}</span>,
+      },
+      {
+        accessorKey: 'source',
+        header: '출처',
+        cell: ({ row }) => <span className="mono-source">{formatSource(row.original.source)}</span>,
+      },
+    ]
+  }, [siteId])
+
+  if (!siteId && role === 'exec' && !view) {
+    return <PortfolioDashboard service="events" />
+  }
+
+  if (scopedSite && scopedSite.systems.length === 0 && alarms.length === 0 && !view) {
+    return <SiteDashboard site={scopedSite} service="events" />
+  }
 
   if (role === 'exec') {
     return <ExecBrief />
@@ -95,11 +115,14 @@ export function EventsPage() {
     <>
       <div className="page-head">
         <div>
-          <h1>{mobileDetail ? selected?.title : scopedSite ? scopedSite.name : '이벤트'}</h1>
+          <p className="page-kicker">이벤트</p>
+          <h1>{mobileDetail ? selected?.title : scopedSite ? scopedSite.name : command ? '통합 관제' : '이벤트'}</h1>
           <p>
             {mobileDetail
               ? '도면과 연동만 봅니다. 목록으로 돌아가 다른 알람을 고를 수 있습니다.'
-              : `구간을 멈추고 다시 봅니다. 이상한 행만 색이 납니다.${scopedSite ? ` · ${KIND_LABEL[scopedSite.kind]}` : ''}`}
+              : scopedSite
+                ? `이 현장, 지금. 붙은 계통의 예외만 색이 납니다. · ${KIND_LABEL[scopedSite.kind]}`
+                : '계약된 현장 전부. 예외만 색이 납니다.'}
           </p>
         </div>
       </div>
@@ -115,12 +138,6 @@ export function EventsPage() {
           <EventFilters />
           {headline && !compact && alarms.some((item) => item.id === headline.id) ? (
             <IncidentBanner alarm={headline} to={eventHref(headline.id)} />
-          ) : null}
-          {scopedSite ? (
-            <section className="deck">
-              <h2>오늘 작업</h2>
-              <WorkQueue siteId={scopedSite.id} limit={4} />
-            </section>
           ) : null}
           {compact ? (
             <section className="deck">
@@ -148,13 +165,20 @@ export function EventsPage() {
               {context}
             </div>
           )}
+          {scopedSite ? (
+            <details className="deck insight-fold">
+              <summary>예외에서 한 걸음</summary>
+              <p className="kpi-meta">CMMS를 대신하지 않습니다. 열린 예외에서 작업 한 건만 엽니다.</p>
+              <WorkQueue siteId={scopedSite.id} limit={4} />
+            </details>
+          ) : null}
           {scopedSite && !compact ? (
-            <section className="deck">
-              <h2>커넥터</h2>
+            <details className="deck insight-fold">
+              <summary>커넥터</summary>
               <p className="kpi-meta">
                 {scopedSite.connectorIds.map((id) => connectorById(id)?.name ?? id).join(' · ')}
               </p>
-            </section>
+            </details>
           ) : null}
         </>
       )}

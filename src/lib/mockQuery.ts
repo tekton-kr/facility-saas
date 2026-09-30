@@ -25,8 +25,8 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     email: 'exec@t-arch.local',
     name: '경영 조회',
     role: 'exec',
-    note: '등록 현장 전체',
-    siteIds: ['hanam-hq', 'yongin-dc', 'suwon-off', 'hanam-plant'],
+    note: '하남 본사 · 하남 열원',
+    siteIds: ['hanam-hq', 'hanam-plant'],
   },
 ]
 

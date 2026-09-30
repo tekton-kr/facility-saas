@@ -2,7 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE: string
-  readonly VITE_AUTO_LOGIN?: string
+  readonly VITE_NOTIFY_KEY?: string
   readonly DEV: boolean
 }
 

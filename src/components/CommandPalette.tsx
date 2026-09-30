@@ -1,6 +1,7 @@
 import { Command } from 'cmdk'
 import { useNavigate } from 'react-router-dom'
 import { APP_IDS, listPoints, siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
+import { isAppCollected, isDomainCollected } from '../lib/collection.ts'
 import { visibleSiteIds, visibleSites } from '../lib/siteScope.ts'
 import { packagesForScope, worksForScope } from '../lib/field.ts'
 import { APP_LABEL, formatNumber, KIND_LABEL } from '../lib/format.ts'
@@ -19,7 +20,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
   const points = listPoints({
     app: app === 'events' ? undefined : app,
     siteIds: visibleSiteIds(),
-  }).slice(0, 80)
+  }).filter((row) => isDomainCollected(row.system.domain)).slice(0, 80)
   const alarms = alarmsForScope({ app: app === 'events' ? 'events' : app }).slice(0, 12)
   const works = worksForScope().slice(0, 8)
   const packs = packagesForScope().slice(0, 8)
@@ -55,7 +56,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                 }}
               >
                 <span>{APP_LABEL[id]}</span>
-                <span className="cmdk-meta">도메인 앱</span>
+                <span className="cmdk-meta">{isAppCollected(id) ? '도메인 앱' : '연동 대기'}</span>
               </Command.Item>
             ))}
           </Command.Group>
@@ -78,7 +79,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           <Command.Group heading="계통">
             {sites.flatMap((site) =>
               site.systems
-                .filter((system) => app === 'events' || systemMatchesApp(system, app))
+                .filter((system) => isDomainCollected(system.domain) && (app === 'events' || systemMatchesApp(system, app)))
                 .map((system) => (
                   <Command.Item
                     key={`${site.id}.${system.id}`}
@@ -171,7 +172,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           <Command.Group heading="장비">
             {sites.flatMap((site) =>
               site.systems
-                .filter((system) => app === 'events' || systemMatchesApp(system, app))
+                .filter((system) => isDomainCollected(system.domain) && (app === 'events' || systemMatchesApp(system, app)))
                 .flatMap((system) =>
                   system.equipment.map((equipment) => (
                     <Command.Item

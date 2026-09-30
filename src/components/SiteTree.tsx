@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
-import { visibleSites } from '../lib/siteScope.ts'
+import { isDomainCollected } from '../lib/collection.ts'
+import { hasPortfolio, visibleSites } from '../lib/siteScope.ts'
 import { getScreens } from '../data/screens.ts'
 import { KIND_LABEL } from '../lib/format.ts'
 import { dutySiteId } from '../lib/roleHome.ts'
@@ -21,11 +22,14 @@ type Props = {
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
-  const { app, search, siteId, systemId, query, role } = useScope()
+  const { app, search, siteId, systemId, query, role, command } = useScope()
   const q = query.trim().toLowerCase()
-  const portfolioTo = role === 'exec'
-    ? `/apps/${app}${search}`
-    : `/apps/${app}/sites/${dutySiteId(app)}${search}`
+  const portfolio = (role === 'exec' || command) && hasPortfolio()
+  const portfolioTo = command
+    ? `/apps/events${search}`
+    : portfolio
+      ? `/apps/${app}${search}`
+      : `/apps/${app}/sites/${dutySiteId(app)}${search}`
 
   return (
     <aside className={`tree${open ? ' is-open' : ''}`}>
@@ -33,37 +37,11 @@ export function SiteTree({ open, onNavigate }: Props) {
       <nav className="tree-nav" aria-label="현장 트리">
         <NavLink
           to={portfolioTo}
-          end={role === 'exec'}
-          className={({ isActive }) => `tree-link${role === 'exec' && isActive && !siteId ? ' is-active' : ''}`}
+          end={portfolio}
+          className={({ isActive }) => `tree-link${portfolio && isActive && !siteId ? ' is-active' : ''}`}
           onClick={onNavigate}
         >
-          {role === 'exec' ? '포트폴리오' : '근무 현장'}
-        </NavLink>
-        <NavLink
-          to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
-          className="tree-link"
-          onClick={onNavigate}
-        >
-          작업
-        </NavLink>
-        <NavLink
-          to={siteId ? `/sites/${siteId}/contract${search}` : role === 'ops' ? `/sites/${dutySiteId('events')}/contract${search}` : `/packages${search}`}
-          className="tree-link"
-          onClick={onNavigate}
-        >
-          계약
-        </NavLink>
-        <NavLink to={`/packages${search}`} className="tree-link" onClick={onNavigate}>
-          개보수
-        </NavLink>
-        <NavLink to={`/settings${search}`} className="tree-link" onClick={onNavigate}>
-          설정
-        </NavLink>
-        <NavLink to={`/screens${search}`} className="tree-link" onClick={onNavigate}>
-          화면 {getScreens().length}면
-        </NavLink>
-        <NavLink to={`/quality${search}`} className="tree-link" onClick={onNavigate}>
-          데이터 품질
+          {command ? '전체 현장' : portfolio ? '포트폴리오' : '배정 현장'}
         </NavLink>
         {visibleSites().filter((site) => siteHasApp(site, app)).map((site) => {
           const hay = `${site.name} ${site.location} ${site.systems.map((system) => system.name).join(' ')}`.toLowerCase()
@@ -91,6 +69,7 @@ export function SiteTree({ open, onNavigate }: Props) {
                       onClick={onNavigate}
                     >
                       {system.wing ? `${system.wing} · ` : ''}{system.name}
+                      {isDomainCollected(system.domain) ? null : <span className="tree-pending"> 대기</span>}
                     </NavLink>
                   ))}
                 </div>
@@ -98,6 +77,32 @@ export function SiteTree({ open, onNavigate }: Props) {
             </div>
           )
         })}
+        <NavLink
+          to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
+          className="tree-link"
+          onClick={onNavigate}
+        >
+          작업
+        </NavLink>
+        <NavLink
+          to={siteId ? `/sites/${siteId}/contract${search}` : role === 'ops' ? `/sites/${dutySiteId('events')}/contract${search}` : `/packages${search}`}
+          className="tree-link"
+          onClick={onNavigate}
+        >
+          계약
+        </NavLink>
+        <NavLink to={`/packages${search}`} className="tree-link" onClick={onNavigate}>
+          개보수
+        </NavLink>
+        <NavLink to={`/settings${search}`} className="tree-link" onClick={onNavigate}>
+          설정
+        </NavLink>
+        <NavLink to={`/screens${search}`} className="tree-link" onClick={onNavigate}>
+          화면 {getScreens().length}면
+        </NavLink>
+        <NavLink to={`/quality${search}`} className="tree-link" onClick={onNavigate}>
+          데이터 품질
+        </NavLink>
       </nav>
     </aside>
   )

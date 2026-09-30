@@ -3,10 +3,45 @@
   publish = "dist"
 
 [[redirects]]
-  from = "/api/saas/*"
-  to = "https://api.tekton.co.kr/api/saas/:splat"
+  from = "/api/login"
+  to = "https://saas-api.tekton.co.kr/api/login"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/login/*"
+  to = "https://saas-api.tekton.co.kr/api/login/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/password/*"
+  to = "https://saas-api.tekton.co.kr/api/password/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sites"
+  to = "https://saas-api.tekton.co.kr/api/sites"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sites/*"
+  to = "https://saas-api.tekton.co.kr/api/sites/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/saas/*"
+  to = "https://saas-api.tekton.co.kr/api/saas/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/desk"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [[redirects]]
   from = "/*"
