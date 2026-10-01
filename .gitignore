@@ -191,9 +191,15 @@ tmp/
 *.rej
 *.bak
 .history/
+~$*
+stats.html
 
 # Local workspace files. Shared editor settings stay.
 *.code-workspace
+
+# Extra tool caches
+.turbo/
+.pnpm-debug.log*
 
 # OS
 .DS_Store

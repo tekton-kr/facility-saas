@@ -24,6 +24,7 @@ export type Session = {
   entry: Entry
   phone?: string
   email?: string
+  displayName?: string
   expiresAt?: string
   mustChangePassword?: boolean
 }
@@ -52,6 +53,12 @@ export function getToken(): string | null {
 
 export function setToken(token: string | null) {
   writeStore(TOKEN_KEY, token)
+}
+
+export function accountLabel(session: Session): string {
+  const named = session.displayName?.trim()
+  if (named) return named
+  return session.email || session.phone || session.name
 }
 
 export function isCommand(session: Session | null | undefined): boolean {
@@ -105,10 +112,9 @@ export function getSession(): Session | null {
     }
     if (parsed.entry === 'staff') {
       if (!parsed.phone) return null
-      const row = lookupStaff(parsed.phone)
       const siteIds = (parsed.siteIds ?? []).filter((id) => id.length > 0)
       if (siteIds.length === 0) return null
-      return { ...parsed, name: row?.name || parsed.name, siteIds, phone: parsed.phone }
+      return { ...parsed, siteIds, phone: parsed.phone }
     }
     const siteIds = (parsed.siteIds ?? []).filter((id) => id.length > 0)
     if (siteIds.length === 0) return null
@@ -247,12 +253,13 @@ export async function acceptLogin(result: LoginResult, extra: { phone?: string; 
     const siteIds = await applyLiveSites(result.siteIds)
     const session: Session = {
       tenantId: tenant.id,
-      name: result.name || result.email,
+      name: result.name || result.email || extra.phone || '계정',
       role: result.role,
       siteIds,
       entry: extra.entry,
       phone: extra.phone,
       email: result.email || undefined,
+      displayName: result.name || undefined,
       expiresAt: new Date(Date.now() + TOKEN_MS).toISOString(),
       mustChangePassword: result.mustChangePassword,
     }

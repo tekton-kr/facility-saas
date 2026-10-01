@@ -86,6 +86,7 @@ type LoginPayload = {
   user?: {
     id?: string
     username?: string
+    name?: string | null
     role?: string
     mustChangePassword?: boolean
   }
@@ -96,10 +97,11 @@ function readLogin(body: LoginPayload, fallbackName: string, kind: 'account' | '
   const user = body.user
   const roleName = (user?.role ?? '').toUpperCase()
   const apiRole: ApiRole = roleName === 'SUPER_ADMIN' || roleName === 'MANAGEMENT' ? roleName : 'OTHER'
+  const personName = typeof user?.name === 'string' ? user.name.trim() : ''
   return {
     token: body.token,
-    email: fallbackName,
-    name: user?.username || fallbackName,
+    email: kind === 'phone' ? '' : fallbackName,
+    name: personName,
     role: apiRole === 'MANAGEMENT' ? 'exec' : 'ops',
     apiRole,
     mustChangePassword: kind === 'phone' ? false : user?.mustChangePassword === true,
@@ -241,6 +243,44 @@ export function readSites(body: unknown): SiteDef[] {
       systems: systemsOf(row.systems),
     }]
   })
+}
+
+export type Notice = {
+  id: string
+  title: string
+  body: string
+  at: string
+}
+
+function readNotices(body: unknown): Notice[] {
+  const bag = asRecord(body)
+  const list = Array.isArray(body)
+    ? body
+    : bag
+      ? (['notices', 'items', 'data', 'rows', 'list', 'result'] as const).flatMap((key) => Array.isArray(bag[key]) ? bag[key] as unknown[] : [])
+      : []
+  return list.flatMap((item, index) => {
+    const row = asRecord(item)
+    if (!row) return []
+    const title = textOf(row, ['title', 'subject', 'name'])
+    if (!title) return []
+    return [{
+      id: textOf(row, ['id', 'noticeId', 'notice_id']) || `notice-${index}`,
+      title,
+      body: textOf(row, ['body', 'content', 'message', 'text']),
+      at: textOf(row, ['at', 'createdAt', 'created_at', 'publishedAt', 'published_at']),
+    }]
+  })
+}
+
+export async function fetchNotices(): Promise<Notice[]> {
+  const response = await fetch(`${AUTH_ROOT}/notices`, {
+    method: 'GET',
+    headers: headers(),
+  })
+  if (response.status === 404) return []
+  const body = await parse<unknown>(response)
+  return readNotices(body)
 }
 
 export async function fetchSites(): Promise<SiteDef[]> {

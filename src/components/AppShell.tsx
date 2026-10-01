@@ -15,7 +15,7 @@ export function AppShell() {
   useField()
   const compact = useCompact()
   const [treeOpen, setTreeOpen] = useState(false)
-  const [alarmCollapsed, setAlarmCollapsed] = useState(false)
+  const [alarmCollapsed, setAlarmCollapsed] = useState(true)
   const [commandOpen, setCommandOpen] = useState(palette)
 
   // ?palette=1 로 들어오거나 그 링크로 이동했을 때만 연다. 닫은 뒤 다시 열지 않는다.

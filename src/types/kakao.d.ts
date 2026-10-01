@@ -27,7 +27,7 @@ interface KakaoMaps {
   LatLng: new (lat: number, lng: number) => KakaoLatLng
   LatLngBounds: new () => KakaoLatLngBounds
   Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap
-  CustomOverlay: new (options: { position: KakaoLatLng; content: HTMLElement; yAnchor?: number }) => KakaoOverlay
+  CustomOverlay: new (options: { position: KakaoLatLng; content: HTMLElement; yAnchor?: number; xAnchor?: number }) => KakaoOverlay
   services: {
     Status: { OK: string }
     Geocoder: new () => {

@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { homePath, leaveLabel, signOut } from '../lib/auth.ts'
+import { accountLabel, homePath, leaveLabel, signOut } from '../lib/auth.ts'
 import { useAuth } from '../lib/useAuth.ts'
 import { AppNav } from './AppNav.tsx'
 import { PropertyFilter } from './PropertyFilter.tsx'
@@ -76,15 +76,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
         <div className="account-chip">
           {compact ? null : (
             <Link className="filter-user" to="/profile">
-              {session
-                ? session.entry === 'station' || session.entry === 'staff'
-                  ? `${session.name} · 현장`
-                  : session.entry === 'notify'
-                    ? `${session.name} · 알림`
-                    : session.entry === 'command'
-                      ? `${session.name} · 통합 관제`
-                      : `${session.name} · 경영`
-                : role === 'exec' ? '경영 · 감시' : '운전자 · 감시'}
+              {session ? accountLabel(session) : role === 'exec' ? '관리단 · 건물주' : '관리소장 · 시설직원'}
             </Link>
           )}
           {compact ? <Link className="filter-user" to="/profile">프로필</Link> : null}
@@ -139,7 +131,11 @@ function BackButton() {
   const navigate = useNavigate()
   const location = useLocation()
   const session = useAuth()
-  const canBack = location.key !== 'default'
+  const home = session ? homePath(session).split('?')[0] : ''
+  const onOwnerMain = session?.role === 'exec'
+    && /^\/apps\/(events|power|metering|solar)(\/sites\/[^/]+)?$/.test(location.pathname)
+  const onMain = onOwnerMain || (home !== '' && location.pathname === home)
+  const canBack = location.key !== 'default' && !onMain
 
   if (!canBack) return null
 
