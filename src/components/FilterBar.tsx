@@ -60,6 +60,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
   const alarms = liveAlarms(siteId)
   const critical = alarms.filter((item) => item.severity === 'critical').length
   const ownerHome = role === 'exec' && !command
+  const staffDesk = role !== 'exec' && !command
   const place = siteLabel(siteId)
   const heading = view === 'flow'
     ? { kicker: '현장', title: headerCopy(location.pathname, place, app).title }
@@ -80,7 +81,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
             </div>
           </div>
         ) : null}
-        {ownerHome ? null : (
+        {ownerHome || staffDesk ? null : (
           <div className="filter-fields">
             {visibleSites().length > 1 ? (
               <select
@@ -120,7 +121,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
             )}
           </div>
         )}
-        {compact || ownerHome ? null : <span className="filter-sync">마지막 동기화 {formatDateTime(sync)}</span>}
+        {compact || ownerHome || staffDesk ? null : <span className="filter-sync">마지막 동기화 {formatDateTime(sync)}</span>}
         <div className="filter-end">
           <SystemStatus compact={compact} siteId={siteId} />
           <div className="account-chip">
@@ -154,8 +155,8 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
           </div>
         ) : null}
       </div>
-      {compact || ownerHome ? null : <PropertyFilter />}
-      {ownerHome ? null : (
+      {compact || ownerHome || staffDesk ? null : <PropertyFilter />}
+      {ownerHome || staffDesk ? null : (
         <div className="filter-row filter-apps">
           <AppNav />
           {compact || session ? null : (

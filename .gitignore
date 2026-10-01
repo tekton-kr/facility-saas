@@ -158,6 +158,10 @@ captures/
 *.docx
 *.pdf
 *.webp
+!public/img/sample/*.webp
+
+# Windows download markers next to local files
+*:Zone.Identifier
 
 # One-off deck builder and earlier login photo tries.
 scripts/build-t-arch-pr.py

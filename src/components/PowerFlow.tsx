@@ -6,6 +6,15 @@ import { formatDateTime } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 
+const SONGDO_PHOTO = '/img/sample/songdo_ait_center_002_3725457f57.webp'
+
+function buildingPhoto(site: SiteDef): string | undefined {
+  if (site.photo) return site.photo
+  const name = site.name.replace(/\s/g, '').toLowerCase()
+  if (name.includes('송도ait')) return SONGDO_PHOTO
+  return undefined
+}
+
 const SERVICES: { id: string; label: string; keys: string[]; row: 'top' | 'bottom'; path: string }[] = [
   { id: 'events', label: '기계설비', keys: ['공조', '냉동', '펌프', '보일러', '열교환'], row: 'top', path: 'apps/events' },
   { id: 'power', label: '전력', keys: ['수전', '전력', '전압', '전류'], row: 'top', path: 'apps/power' },
@@ -82,6 +91,7 @@ export function PowerFlow({ site }: { site: SiteDef }) {
   const { search } = useScope()
   const top = SERVICES.filter((item) => item.row === 'top')
   const bottom = SERVICES.filter((item) => item.row === 'bottom')
+  const photo = buildingPhoto(site)
   const points = listPoints({ siteId: site.id })
   const live = points.filter((row) => {
     const tel = getTelemetry(row, 'live')
@@ -99,7 +109,7 @@ export function PowerFlow({ site }: { site: SiteDef }) {
       </header>
       <section className="building-card" aria-label="건물 정보">
         <div className="building-photo">
-          {site.photo ? <img src={site.photo} alt="" /> : (
+          {photo ? <img src={photo} alt={site.name} /> : (
             <svg viewBox="0 0 80 64" aria-hidden="true">
               <path d="M8 56V28L40 8l32 20v28H8Z" />
               <path d="M32 56V36h16v20" />
