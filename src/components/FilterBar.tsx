@@ -2,6 +2,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { accountLabel, homePath, leaveLabel, signOut } from '../lib/auth.ts'
+import { getSite } from '../lib/catalog.ts'
+import { DEMO_SITES } from '../data/ownerDemo.ts'
 import { useAuth } from '../lib/useAuth.ts'
 import { AppNav } from './AppNav.tsx'
 import { PropertyFilter } from './PropertyFilter.tsx'
@@ -10,7 +12,30 @@ import { hasPortfolio, visibleSites } from '../lib/siteScope.ts'
 import { formatDateTime, KIND_LABEL, ROLE_LABEL } from '../lib/format.ts'
 import { alarmsForScope, lastSyncAt } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
-import type { Role } from '../types/domain.ts'
+import type { AppId, Role } from '../types/domain.ts'
+
+const SERVICE_LABEL: Partial<Record<AppId, string>> = {
+  events: '설비자동제어',
+  power: '전력',
+  metering: '원격검침',
+  solar: '제로에너지',
+}
+
+function siteLabel(siteId: string | undefined): string | undefined {
+  if (!siteId) return undefined
+  return getSite(siteId)?.name ?? DEMO_SITES.find((site) => site.id === siteId)?.name
+}
+
+function headerCopy(pathname: string, siteName: string | undefined, app: AppId | undefined): { kicker: string, title: string } {
+  if (pathname.startsWith('/profile')) return { kicker: siteName ?? '계정', title: '프로필' }
+  if (pathname.startsWith('/settings')) return { kicker: siteName ?? '계정', title: '설정' }
+  if (pathname.includes('/contract')) return { kicker: siteName ?? '시설관리', title: '유지보수 계약' }
+  if (pathname.startsWith('/packages')) return { kicker: siteName ?? '시설관리', title: '개보수' }
+  return {
+    kicker: (app && SERVICE_LABEL[app]) || '시설관리',
+    title: siteName ?? '전체 현장',
+  }
+}
 
 type Props = {
   compact: boolean
@@ -20,10 +45,13 @@ type Props = {
 
 export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
   const session = useAuth()
+  const location = useLocation()
   const { app, siteId, range, query, role, command, search, patchParams, goSite, goHome, goRole } = useScope()
   const sync = lastSyncAt()
   const critical = alarmsForScope({ siteId, app: 'events' }).filter((item) => item.severity === 'critical').length
   const ownerHome = role === 'exec' && !command
+  const place = siteLabel(siteId)
+  const heading = headerCopy(location.pathname, place, app)
 
   return (
     <header className="filter">
@@ -32,6 +60,12 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
         <button className="filter-toggle" type="button" onClick={onToggleTree}>
           현장
         </button>
+        {ownerHome ? (
+          <div className="filter-title">
+            <span>{heading.kicker}</span>
+            <strong>{heading.title}</strong>
+          </div>
+        ) : null}
         {ownerHome ? null : (
           <div className="filter-fields">
             {visibleSites().length > 1 ? (

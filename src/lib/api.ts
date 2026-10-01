@@ -4,7 +4,7 @@ import { hydrateFindings } from './findings.ts'
 import { hydrateTelemetry } from './telemetry.ts'
 import { getToken } from './auth.ts'
 
-const API_BASE = import.meta.env.VITE_API_BASE || '/api/saas'
+const API_BASE = '/api/saas'
 const AUTH_ROOT = '/api'
 
 export type ApiRole = 'SUPER_ADMIN' | 'MANAGEMENT' | 'OTHER'
@@ -97,10 +97,11 @@ function readLogin(body: LoginPayload, fallbackName: string, kind: 'account' | '
   const user = body.user
   const roleName = (user?.role ?? '').toUpperCase()
   const apiRole: ApiRole = roleName === 'SUPER_ADMIN' || roleName === 'MANAGEMENT' ? roleName : 'OTHER'
+  const username = typeof user?.username === 'string' ? user.username.trim() : ''
   const personName = typeof user?.name === 'string' ? user.name.trim() : ''
   return {
     token: body.token,
-    email: kind === 'phone' ? '' : fallbackName,
+    email: kind === 'phone' ? '' : (fallbackName || username),
     name: personName,
     role: apiRole === 'MANAGEMENT' ? 'exec' : 'ops',
     apiRole,

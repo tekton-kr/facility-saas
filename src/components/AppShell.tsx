@@ -9,13 +9,24 @@ import { SiteTree } from './SiteTree.tsx'
 import { useCompact } from '../lib/media.ts'
 import { useField } from '../lib/useField.ts'
 import { useScope } from '../lib/useScope.ts'
+import { readTheme, type ThemeId } from '../lib/theme.ts'
 
 export function AppShell() {
   const { search, palette } = useScope()
   useField()
   const compact = useCompact()
   const [treeOpen, setTreeOpen] = useState(false)
-  const [alarmCollapsed, setAlarmCollapsed] = useState(true)
+  const [rail, setRail] = useState<'closed' | 'alarms' | 'notices'>('closed')
+  const [theme, setTheme] = useState<ThemeId>(readTheme)
+  const light = theme === 'day' || theme === 'sky' || theme === 'sand' || theme === 'mint'
+
+  useEffect(() => {
+    function syncTheme() {
+      setTheme(readTheme())
+    }
+    window.addEventListener('t-arch-theme', syncTheme)
+    return () => window.removeEventListener('t-arch-theme', syncTheme)
+  }, [])
   const [commandOpen, setCommandOpen] = useState(palette)
 
   // ?palette=1 로 들어오거나 그 링크로 이동했을 때만 연다. 닫은 뒤 다시 열지 않는다.
@@ -37,7 +48,7 @@ export function AppShell() {
   }, [])
 
   return (
-    <div className={`shell${alarmCollapsed ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}>
+    <div className={`shell theme-${theme}${light ? ' is-light' : ''}${rail === 'closed' ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}>
       <Link className="brand" to={`/apps/events${search}`} title="T-ARCH · 시설을 돌보다">
         <BrandMark />
         <span>
@@ -63,9 +74,8 @@ export function AppShell() {
       </div>
       {compact ? null : (
         <AlarmRail
-          collapsed={alarmCollapsed}
-          open={false}
-          onToggle={() => setAlarmCollapsed((value) => !value)}
+          mode={rail}
+          onMode={setRail}
         />
       )}
       {compact ? <BottomNav /> : null}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { AlarmCards } from '../components/AlarmCards.tsx'
 import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
-import { SiteDashboard } from '../components/SiteDashboard.tsx'
+import { SiteCommand } from '../components/SiteCommand.tsx'
 import { DataTable } from '../components/DataTable.tsx'
 import { EventContext } from '../components/EventContext.tsx'
 import { EventFilters } from '../components/EventFilters.tsx'
@@ -85,12 +85,12 @@ export function EventsPage() {
     ]
   }, [siteId])
 
-  if (role === 'exec' && !view) {
+  if (!view && !siteId) {
     return <PortfolioDashboard service="events" />
   }
 
-  if (scopedSite && scopedSite.systems.length === 0 && alarms.length === 0 && !view) {
-    return <SiteDashboard site={scopedSite} service="events" />
+  if (!view && scopedSite) {
+    return <SiteCommand site={scopedSite} />
   }
 
   if (role === 'exec') {

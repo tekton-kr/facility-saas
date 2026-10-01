@@ -10,6 +10,7 @@ import { ForbiddenPage } from './pages/ForbiddenPage.tsx'
 import { LobbyPage } from './pages/LobbyPage.tsx'
 import { DeskPage, LoginPage } from './pages/LoginPage.tsx'
 import { PrivacyPage, TermsPage } from './pages/LegalPage.tsx'
+import { GuidePage } from './pages/GuidePage.tsx'
 import { PasswordPage } from './pages/PasswordPage.tsx'
 import { NotifyPage } from './pages/NotifyPage.tsx'
 import { StationPage } from './pages/StationPage.tsx'
@@ -20,6 +21,7 @@ import { RoleHomeRedirect } from './pages/RoleHomeRedirect.tsx'
 import { ScreenIndexPage } from './pages/ScreenIndexPage.tsx'
 import { ScreenRedirect } from './pages/ScreenRedirect.tsx'
 import { ContractPage } from './pages/ContractPage.tsx'
+import { InspectionsPage, CyclesPage, PhotosPage, DrawingsPage, SchedulePage } from './pages/MaintainPages.tsx'
 import { PackagesPage } from './pages/PackagesPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
@@ -34,6 +36,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/login/password" element={<PasswordPage />} />
+          <Route path="/guide" element={<GuidePage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/desk" element={<DeskPage />} />
@@ -57,6 +60,17 @@ export default function App() {
                 path="/apps/:app/sites/:siteId/systems/:systemId/equipment/:equipmentId/points/:pointId"
                 element={<PointPage />}
               />
+              <Route path="/inspections" element={<InspectionsPage />} />
+              <Route path="/sites/:siteId/inspections" element={<InspectionsPage />} />
+              <Route path="/cycles" element={<CyclesPage />} />
+              <Route path="/sites/:siteId/cycles" element={<CyclesPage />} />
+              <Route path="/photos" element={<PhotosPage />} />
+              <Route path="/sites/:siteId/photos" element={<PhotosPage />} />
+              <Route path="/drawings" element={<DrawingsPage />} />
+              <Route path="/sites/:siteId/drawings" element={<DrawingsPage />} />
+              <Route path="/schedule" element={<SchedulePage />} />
+              <Route path="/sites/:siteId/schedule" element={<SchedulePage />} />
+              <Route path="/contract" element={<ContractPage />} />
               <Route path="/work" element={<WorkPage />} />
               <Route path="/work/:workId" element={<WorkPage />} />
               <Route path="/sites/:siteId/work" element={<WorkPage />} />

@@ -16,7 +16,7 @@ export function WorkQueue({ siteId, limit }: Props) {
   const visible = limit ? works.slice(0, limit) : works
 
   if (visible.length === 0) {
-    return <div className="empty">오늘 열린 작업이 없습니다.</div>
+    return <div className="empty">이 범위에 열린 작업이 없습니다.</div>
   }
 
   return (

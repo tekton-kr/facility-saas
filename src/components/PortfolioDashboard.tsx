@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AppId, Kpi } from '../types/domain.ts'
 import {
-  DEMO_ALARMS,
   DEMO_GAUGES,
   DEMO_POWER_LABELS,
   DEMO_POWER_VALUES,
@@ -10,7 +9,7 @@ import {
   DEMO_WEEK_LABELS,
   DEMO_WEEK_VALUES,
 } from '../data/ownerDemo.ts'
-import { formatDateTime } from '../lib/format.ts'
+import { upcomingAcross } from '../lib/maintain.ts'
 import { visibleSites } from '../lib/siteScope.ts'
 import { apiAlarms, kpisForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
@@ -112,17 +111,6 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
     }).length
   })
 
-  const alarmRows = alarmsAreSample
-    ? DEMO_ALARMS.map((alarm) => ({ ...alarm, sample: true }))
-    : realAlarms.slice(0, 8).map((alarm) => ({
-        id: alarm.id,
-        title: alarm.title,
-        siteName: live.find((site) => site.id === alarm.siteId)?.name ?? alarm.siteId,
-        at: formatDateTime(alarm.at),
-        sample: false,
-        siteId: alarm.siteId,
-      }))
-
   return (
     <div className="cmd">
       <header className="cmd-head">
@@ -206,15 +194,15 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
           />
         </section>
 
-        <aside className={`cmd-panel cmd-alarms${alarmsAreSample ? ' is-sample' : ''}`}>
-          <h2>이상 알람{alarmsAreSample ? <SampleTag /> : null}</h2>
+        <aside className="cmd-panel cmd-alarms is-sample">
+          <h2>다가오는 일<SampleTag /></h2>
           <ul>
-            {alarmRows.map((alarm) => (
-              <li key={alarm.id} className={alarm.sample ? 'is-sample' : undefined}>
-                <Link to={alarm.sample ? `/apps/events${search}` : `/apps/events/sites/${alarm.siteId}${search}`}>
-                  <strong>{alarm.title}{alarm.sample ? <SampleTag /> : null}</strong>
-                  <em>{alarm.siteName}</em>
-                  <time>{alarm.at}</time>
+            {upcomingAcross().map((item) => (
+              <li key={item.id}>
+                <Link to={`${item.to}${search}`}>
+                  <strong>{item.title}<SampleTag /></strong>
+                  <em>{item.siteName} · {item.kind}</em>
+                  <time>{item.when}</time>
                 </Link>
               </li>
             ))}

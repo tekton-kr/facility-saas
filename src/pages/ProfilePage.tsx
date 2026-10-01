@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { accountLabel, homePath, type Session } from '../lib/auth.ts'
+import { homePath, loginAccount, personName, type Session } from '../lib/auth.ts'
 import { formatDateTime } from '../lib/format.ts'
 import { visibleSites } from '../lib/siteScope.ts'
 import { useAuth } from '../lib/useAuth.ts'
@@ -11,19 +11,13 @@ function roleText(session: Session): string {
   return '관리소장 · 시설직원'
 }
 
-function accountText(session: Session): string {
-  if (session.email) return session.email
-  if (session.phone) return session.phone
-  return '계정 없음'
-}
-
 export function ProfilePage() {
   const session = useAuth()
   if (!session) return null
   const dark = session.role === 'exec' || session.entry === 'command'
   const sites = visibleSites()
-  const serverName = accountLabel(session)
-  const hasServerName = Boolean(session.displayName?.trim())
+  const name = personName(session)
+  const account = loginAccount(session)
 
   return (
     <div className={dark ? 'cmd profile' : 'profile'}>
@@ -37,9 +31,9 @@ export function ProfilePage() {
       <section className="profile-card">
         <dl>
           <dt>이름</dt>
-          <dd>{hasServerName ? serverName : '서버에 등록된 이름이 없습니다.'}</dd>
-          <dt>계정</dt>
-          <dd>{accountText(session)}</dd>
+          <dd>{name || '서버에 등록된 이름이 없습니다.'}</dd>
+          <dt>{session.role === 'exec' || session.entry === 'command' ? '이메일' : '휴대폰'}</dt>
+          <dd>{account || '계정 없음'}</dd>
           <dt>역할</dt>
           <dd>{roleText(session)}</dd>
           <dt>로그인 유지</dt>
@@ -60,6 +54,7 @@ export function ProfilePage() {
         )}
       </section>
       <p className="profile-links">
+        <Link to="/guide">이용방법</Link>
         <Link to="/terms">이용약관</Link>
         <Link to="/privacy">개인정보처리방침</Link>
       </p>

@@ -4,10 +4,6 @@
 
 ## 실행
 
-```bash
-cp .env.example .env
-```
-
 브라우저는 `/api/saas`만 봅니다. 로그인·현장·검침·대시보드 조회입니다. ingest·edge는 이 프론트에 없습니다.
 
 개발 서버와 Netlify가 `/api`를 `https://saas-api.tekton.co.kr`로 넘깁니다. 소스에 비밀번호를 두지 않습니다.

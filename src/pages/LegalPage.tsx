@@ -1,28 +1,32 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
-function LegalFrame({ title, children }: { title: string; children: ReactNode }) {
+export function LegalFrame({ title, lede, wide, children }: { title: string; lede?: string; wide?: boolean; children: ReactNode }) {
   useEffect(() => {
     const previous = document.title
     document.title = `${title} · T-ARCH 시설관리플랫폼`
-    window.scrollTo(0, 0)
+    const id = window.location.hash.replace('#', '')
+    const target = id ? document.getElementById(id) : null
+    if (target) target.scrollIntoView()
+    else window.scrollTo(0, 0)
     return () => {
       document.title = previous
     }
   }, [title])
 
   return (
-    <div className="legal">
+    <div className={wide ? 'legal is-wide' : 'legal'}>
       <header className="legal-bar">
         <Link className="legal-brand" to="/login">T-ARCH</Link>
         <nav className="legal-nav" aria-label="서비스 문서">
+          <Link to="/guide">이용방법</Link>
           <Link to="/terms">이용약관</Link>
           <Link to="/privacy">개인정보처리방침</Link>
         </nav>
       </header>
       <article className="legal-doc">
         <h1>{title}</h1>
-        <p className="legal-meta">시행 2026년 10월 1일 · 운영 TEKTON</p>
+        <p className="legal-meta">{lede ?? '시행 2026년 10월 1일 · 운영 TEKTON'}</p>
         {children}
       </article>
     </div>

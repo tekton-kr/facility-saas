@@ -55,6 +55,29 @@ export function setToken(token: string | null) {
   writeStore(TOKEN_KEY, token)
 }
 
+export function personName(session: Session): string {
+  const display = session.displayName?.trim()
+  if (display) return display
+  const name = session.name?.trim()
+  if (name && name !== '계정' && !name.includes('@')) return name
+  return ''
+}
+
+export function loginAccount(session: Session): string {
+  if (session.email?.trim()) return session.email.trim()
+  if (session.phone?.trim()) return session.phone.trim()
+  if (session.name?.includes('@')) return session.name.trim()
+  if (session.role === 'exec' || session.entry === 'command') {
+    try {
+      const saved = localStorage.getItem('t-arch-saved-email')?.trim()
+      if (saved) return saved
+    } catch {
+      /* ignore */
+    }
+  }
+  return ''
+}
+
 export function accountLabel(session: Session): string {
   const named = session.displayName?.trim()
   if (named) return named

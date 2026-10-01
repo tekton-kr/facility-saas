@@ -183,17 +183,11 @@ export function useScope() {
   }
 
   function goHome() {
-    if (command) {
-      navigate(`/apps/events${search}`)
+    if (role === 'exec' || command) {
+      navigate(`/apps/${app}${search}`)
       return
     }
-    const assigned = visibleSiteIds()
-    if (role === 'ops' || assigned.length === 1) {
-      const site = assigned.length === 1 ? assigned[0] : dutySiteId(app)
-      navigate(`/apps/${app}/sites/${site}${search}`)
-      return
-    }
-    navigate(`/apps/${app}${search}`)
+    navigate(`/apps/${app}/sites/${dutySiteId(app)}${search}`)
   }
 
   function goRole(next: Role) {

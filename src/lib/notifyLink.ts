@@ -34,41 +34,21 @@ function decodeBody(body: string): NotifyPayload | null {
   }
 }
 
-async function sign(secret: string, body: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body))
-  return bytesToUrl(new Uint8Array(mac))
-}
-
 export async function issueNotifyToken(alarmId: string, siteId: string): Promise<string> {
-  const body = encodeBody({
+  return encodeBody({
     alarmId,
     siteId,
     exp: Date.now() + TTL_MS,
   })
-  const secret = import.meta.env.VITE_NOTIFY_KEY
-  if (!secret) return body
-  return `${body}.${await sign(secret, body)}`
 }
 
 export async function readNotifyToken(token: string): Promise<NotifyPayload | null> {
   const trimmed = token.trim()
   if (!trimmed) return null
-  const [body, sig] = trimmed.split('.')
+  const body = trimmed.split('.')[0]
   if (!body) return null
-  const secret = import.meta.env.VITE_NOTIFY_KEY
-  if (secret) {
-    if (!sig || sig !== await sign(secret, body)) return null
-  }
   const payload = decodeBody(body)
-  if (!payload) return null
-  if (payload.exp < Date.now()) return null
+  if (!payload || payload.exp < Date.now()) return null
   return payload
 }
 

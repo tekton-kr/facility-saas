@@ -5,30 +5,23 @@ import { useScope } from '../lib/useScope.ts'
 export function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { siteId, search, role } = useScope()
+  const { siteId, search } = useScope()
   const duty = siteId ?? dutySiteId('events')
-  const owner = role === 'exec'
-  const items = owner
-    ? [
-        { id: 'alarms', label: '시설', to: `/apps/events${search}` },
-        { id: 'contract', label: '계약', to: `/sites/${duty}/contract${search}` },
-        { id: 'packages', label: '개보수', to: `/packages${search}` },
-        { id: 'settings', label: '설정', to: `/settings${search}` },
-      ]
-    : [
-        { id: 'alarms', label: '알람', to: `/apps/events/sites/${duty}${search}` },
-        { id: 'work', label: '작업', to: `/sites/${duty}/work${search}` },
-        { id: 'contract', label: '계약', to: `/sites/${duty}/contract${search}` },
-        { id: 'packages', label: '개보수', to: `/packages${search}` },
-      ]
+  const items = [
+    { id: 'wall', label: '상황판', to: `/apps/events${search}` },
+    { id: 'board', label: '대시보드', to: duty ? `/apps/events/sites/${duty}${search}` : `/apps/events${search}` },
+    { id: 'inspect', label: '점검', to: duty ? `/sites/${duty}/inspections${search}` : `/inspections${search}` },
+    { id: 'schedule', label: '일정', to: duty ? `/sites/${duty}/schedule${search}` : `/schedule${search}` },
+    { id: 'contract', label: '계약', to: duty ? `/sites/${duty}/contract${search}` : `/contract${search}` },
+  ]
 
   function active(id: string) {
     const path = location.pathname
-    if (id === 'alarms') return path.startsWith('/apps/events')
-    if (id === 'work') return path.startsWith('/work') || path.endsWith('/work')
-    if (id === 'contract') return path.endsWith('/contract')
-    if (id === 'packages') return path.startsWith('/packages')
-    if (id === 'settings') return path.startsWith('/settings')
+    if (id === 'wall') return path === '/apps/events'
+    if (id === 'board') return path.startsWith('/apps/') && path.includes('/sites/')
+    if (id === 'inspect') return path.includes('/inspections')
+    if (id === 'schedule') return path.includes('/schedule')
+    if (id === 'contract') return path.endsWith('/contract') || path === '/contract'
     return false
   }
 

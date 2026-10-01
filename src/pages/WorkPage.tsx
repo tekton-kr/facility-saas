@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ManageFrame } from '../components/ManageFrame.tsx'
 import { WorkQueue } from '../components/WorkQueue.tsx'
+import { getSite } from '../lib/catalog.ts'
 import {
   addWorkProof,
   advanceWork,
@@ -21,37 +23,35 @@ const STATUSES = ['received', 'dispatch', 'on-site', 'done'] as const
 
 export function WorkPage() {
   const { workId } = useParams()
-  const { siteId, search, role } = useScope()
+  const { siteId, search } = useScope()
   useField()
   const work = workById(workId)
 
   if (workId && !work) {
     return (
-      <div className="panel">
-        <h1>작업 없음</h1>
-        <p><Link to={`/work${search}`}>목록</Link></p>
-      </div>
+      <ManageFrame kicker="작업" title="작업을 찾지 못했습니다">
+        <p className="manage-note"><Link to={`/work${search}`}>목록으로</Link></p>
+      </ManageFrame>
     )
   }
 
   if (!work) {
+    const place = siteId ? (getSite(siteId)?.name ?? '이 현장') : '전체 현장'
     return (
-      <>
-        <div className="page-head">
-          <div>
-            <h1>{role === 'exec' ? '작업 · 포트폴리오' : '예외에서 한 걸음'}</h1>
-            <p>열린 예외에서 작업 한 건만 엽니다. CMMS를 대신하지 않습니다. 설정값·기동정지는 없습니다.</p>
-          </div>
-        </div>
-        <section className="deck">
-          <h2>{siteId ? `${siteLabel(siteId)} 작업` : '열린 작업'}</h2>
-          <WorkQueue siteId={role === 'ops' ? siteId : undefined} />
+      <ManageFrame kicker={place} title="작업 내역">
+        <p className="manage-note">열린 작업과 끝난 이력을 같이 봅니다.</p>
+        <section className="manage-card">
+          <WorkQueue siteId={siteId} />
         </section>
-      </>
+      </ManageFrame>
     )
   }
 
-  return <WorkDetail key={work.id} work={work} />
+  return (
+    <ManageFrame kicker="작업" title={work.title}>
+      <WorkDetail work={work} />
+    </ManageFrame>
+  )
 }
 
 function WorkDetail({ work }: { work: WorkOrder }) {
@@ -72,20 +72,15 @@ function WorkDetail({ work }: { work: WorkOrder }) {
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <p className="crumbs">
-            <Link to={`/work${search}`}>작업</Link>
-            <span> / {work.id}</span>
-          </p>
-          <h1>{work.title}</h1>
-          <p>
-            {siteLabel(work.siteId)} · {WORK_KIND_LABEL[work.kind]}
-            {vendor ? ` · ${vendor.name}` : ''}
-            {late ? ' · SLA 초과' : ''}
-          </p>
-        </div>
-      </div>
+      <p className="crumbs">
+        <Link to={`/work${search}`}>목록</Link>
+        <span> / {work.id}</span>
+      </p>
+      <p className="manage-note">
+        {siteLabel(work.siteId)} · {WORK_KIND_LABEL[work.kind]}
+        {vendor ? ` · ${vendor.name}` : ''}
+        {late ? ' · 기한 지남' : ''}
+      </p>
 
       <ol className="work-steps">
         {STATUSES.map((status) => (
@@ -123,13 +118,13 @@ function WorkDetail({ work }: { work: WorkOrder }) {
             {next === 'dispatch' ? '출동' : next === 'on-site' ? '도착' : '완료'}
           </button>
         ) : (
-          <p className="kpi-note">완료. 설비 쓰기는 없습니다.</p>
+          <p className="manage-note">이 작업은 완료되었습니다.</p>
         )}
       </section>
 
       <section className="panel">
         <h2>증빙</h2>
-        <p className="kpi-note">방문 사진 라벨만 남깁니다. CCTV 원본은 저장하지 않습니다.</p>
+        <p className="manage-note">방문 내용을 짧게 남깁니다.</p>
         {work.proofs.length === 0 ? <p className="kpi-meta">증빙 없음</p> : (
           <div className="proof-grid">
             {work.proofs.map((item) => (
@@ -157,7 +152,7 @@ function WorkDetail({ work }: { work: WorkOrder }) {
           onChange={(event) => setNote(event.target.value)}
           onBlur={() => setWorkNote(work.id, note)}
         />
-        <p className="kpi-meta">카카오는 이 메모를 전달하는 자리입니다. 설비 명령은 없습니다.</p>
+        <p className="manage-note">입력칸에서 벗어나면 이 브라우저에 저장됩니다.</p>
       </section>
     </>
   )

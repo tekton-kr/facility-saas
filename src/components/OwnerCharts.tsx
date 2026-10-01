@@ -5,6 +5,7 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts'
+import { chartTone, readTheme } from '../lib/theme.ts'
 
 echarts.use([BarChart, GaugeChart, LineChart, PieChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -12,19 +13,22 @@ const ReactEChartsCore = (
   EchartsReactCore as unknown as { default?: typeof EchartsReactCore }
 ).default ?? EchartsReactCore
 
-const TEXT = '#9fb3c8'
-const GRID = 'rgba(120, 170, 210, 0.16)'
-
 type Slice = { name: string; value: number; color: string }
 
+function useTone() {
+  const id = readTheme()
+  return chartTone(id)
+}
+
 export function OwnerMix({ slices, total }: { slices: Slice[]; total: number }) {
+  const tone = useTone()
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#0c1c2e',
-      borderColor: 'rgba(120, 180, 220, 0.35)',
-      textStyle: { color: '#e7f2ff', fontSize: 12 },
+      backgroundColor: tone.tip,
+      borderColor: tone.tipLine,
+      textStyle: { color: tone.text, fontSize: 12 },
     },
     series: [
       {
@@ -44,42 +48,43 @@ export function OwnerMix({ slices, total }: { slices: Slice[]; total: number }) 
         type: 'text',
         left: 'center',
         top: '42%',
-        style: { text: String(total), fill: '#f4fbff', fontSize: 28, fontWeight: 700 },
+        style: { text: String(total), fill: tone.ink, fontSize: 28, fontWeight: 700 },
       },
       {
         type: 'text',
         left: 'center',
         top: '58%',
-        style: { text: '건물', fill: TEXT, fontSize: 12 },
+        style: { text: '嫄대Ъ', fill: tone.muted, fontSize: 12 },
       },
     ],
-  }), [slices, total])
+  }), [slices, total, tone])
 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 168 }} />
 }
 
 export function OwnerWeek({ labels, values }: { labels: string[]; values: number[] }) {
+  const tone = useTone()
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
     grid: { left: 28, right: 8, top: 16, bottom: 24 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#0c1c2e',
-      borderColor: 'rgba(120, 180, 220, 0.35)',
-      textStyle: { color: '#e7f2ff', fontSize: 12 },
+      backgroundColor: tone.tip,
+      borderColor: tone.tipLine,
+      textStyle: { color: tone.text, fontSize: 12 },
     },
     xAxis: {
       type: 'category',
       data: labels,
-      axisLine: { lineStyle: { color: GRID } },
-      axisLabel: { color: TEXT, fontSize: 11 },
+      axisLine: { lineStyle: { color: tone.grid } },
+      axisLabel: { color: tone.muted, fontSize: 11 },
       axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
       minInterval: 1,
-      splitLine: { lineStyle: { color: GRID } },
-      axisLabel: { color: TEXT, fontSize: 11 },
+      splitLine: { lineStyle: { color: tone.grid } },
+      axisLabel: { color: tone.muted, fontSize: 11 },
     },
     series: [
       {
@@ -88,16 +93,17 @@ export function OwnerWeek({ labels, values }: { labels: string[]; values: number
         barWidth: 14,
         itemStyle: {
           borderRadius: [3, 3, 0, 0],
-          color: '#3dd6ff',
+          color: tone.line,
         },
       },
     ],
-  }), [labels, values])
+  }), [labels, values, tone])
 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 160 }} />
 }
 
 export function OwnerGauge({ value, max, color }: { value: number; max: number; color: string }) {
+  const tone = useTone()
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
     series: [
@@ -108,7 +114,7 @@ export function OwnerGauge({ value, max, color }: { value: number; max: number; 
         startAngle: 210,
         endAngle: -30,
         progress: { show: true, width: 12, itemStyle: { color } },
-        axisLine: { lineStyle: { width: 12, color: [[1, 'rgba(120,170,210,0.18)']] } },
+        axisLine: { lineStyle: { width: 12, color: [[1, tone.track]] } },
         pointer: { show: false },
         axisTick: { show: false },
         splitLine: { show: false },
@@ -119,38 +125,39 @@ export function OwnerGauge({ value, max, color }: { value: number; max: number; 
           offsetCenter: [0, '4%'],
           fontSize: 26,
           fontWeight: 700,
-          color: '#f4fbff',
+          color: tone.ink,
           formatter: '{value}',
         },
         data: [{ value }],
       },
     ],
-  }), [value, max, color])
+  }), [value, max, color, tone])
 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 148 }} />
 }
 
 export function OwnerLine({ labels, values }: { labels: string[]; values: number[] }) {
+  const tone = useTone()
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
     grid: { left: 36, right: 12, top: 16, bottom: 24 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#0c1c2e',
-      borderColor: 'rgba(120, 180, 220, 0.35)',
-      textStyle: { color: '#e7f2ff', fontSize: 12 },
+      backgroundColor: tone.tip,
+      borderColor: tone.tipLine,
+      textStyle: { color: tone.text, fontSize: 12 },
     },
     xAxis: {
       type: 'category',
       data: labels,
-      axisLine: { lineStyle: { color: GRID } },
-      axisLabel: { color: TEXT, fontSize: 11 },
+      axisLine: { lineStyle: { color: tone.grid } },
+      axisLabel: { color: tone.muted, fontSize: 11 },
       axisTick: { show: false },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: GRID } },
-      axisLabel: { color: TEXT, fontSize: 11 },
+      splitLine: { lineStyle: { color: tone.grid } },
+      axisLabel: { color: tone.muted, fontSize: 11 },
     },
     series: [
       {
@@ -158,11 +165,11 @@ export function OwnerLine({ labels, values }: { labels: string[]; values: number
         data: values,
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 2, color: '#3dd6ff' },
-        areaStyle: { color: 'rgba(61, 214, 255, 0.16)' },
+        lineStyle: { width: 2, color: tone.line },
+        areaStyle: { color: tone.area },
       },
     ],
-  }), [labels, values])
+  }), [labels, values, tone])
 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 180 }} />
 }

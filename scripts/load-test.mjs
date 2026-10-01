@@ -1,22 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-
-function loadDotEnv() {
-  try {
-    const text = readFileSync(new URL('../.env', import.meta.url), 'utf8')
-    for (const line of text.split(/\r?\n/)) {
-      if (!line || line.startsWith('#')) continue
-      const index = line.indexOf('=')
-      if (index < 1) continue
-      const key = line.slice(0, index)
-      const value = line.slice(index + 1)
-      if (!process.env[key]) process.env[key] = value
-    }
-  } catch {
-    /* optional */
-  }
-}
-
-loadDotEnv()
+import { writeFileSync, mkdirSync } from 'node:fs'
 
 const base = process.env.BASE_URL || 'http://localhost:5173'
 const email = process.env.CHECK_EMAIL || process.env.DEMO_OPS_EMAIL || ''

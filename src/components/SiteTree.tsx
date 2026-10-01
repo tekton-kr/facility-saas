@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
 import { isDomainCollected } from '../lib/collection.ts'
-import { hasPortfolio, visibleSites } from '../lib/siteScope.ts'
+import { visibleSites } from '../lib/siteScope.ts'
 import { KIND_LABEL } from '../lib/format.ts'
 import { dutySiteId } from '../lib/roleHome.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
@@ -21,27 +21,37 @@ type Props = {
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
-  const { app, search, siteId, systemId, query, role, command } = useScope()
+  const { app, search, siteId, systemId, query, role } = useScope()
   const q = query.trim().toLowerCase()
-  const portfolio = (role === 'exec' || command) && hasPortfolio()
-  const portfolioTo = command
-    ? `/apps/events${search}`
-    : portfolio
-      ? `/apps/${app}${search}`
-      : `/apps/${app}/sites/${dutySiteId(app)}${search}`
+  const currentId = siteId || dutySiteId(app)
+  const wallTo = `/apps/${app}${search}`
+  const boardTo = currentId ? `/apps/${app}/sites/${currentId}${search}` : wallTo
 
   return (
     <aside className={`tree${open ? ' is-open' : ''}`}>
-      <div className="tree-head">현장</div>
-      <nav className="tree-nav" aria-label="현장 트리">
+      <div className="tree-modes" role="group" aria-label="화면">
         <NavLink
-          to={portfolioTo}
-          end={portfolio}
-          className={({ isActive }) => `tree-link${portfolio && isActive && !siteId ? ' is-active' : ''}`}
+          to={wallTo}
+          end
+          className={({ isActive }) => `tree-mode${isActive ? ' is-on' : ''}`}
           onClick={onNavigate}
         >
-          {command ? '전체 현장' : portfolio ? '포트폴리오' : '배정 현장'}
+          상황판
         </NavLink>
+        {currentId ? (
+          <NavLink
+            to={boardTo}
+            className={({ isActive }) => `tree-mode${isActive ? ' is-on' : ''}`}
+            onClick={onNavigate}
+          >
+            대시보드
+          </NavLink>
+        ) : (
+          <span className="tree-mode is-disabled">대시보드</span>
+        )}
+      </div>
+      <nav className="tree-nav" aria-label="현장 트리">
+      <div className="tree-head">현장</div>
         {visibleSites().filter((site) => siteHasApp(site, app)).map((site) => {
           const hay = `${site.name} ${site.location} ${site.systems.map((system) => system.name).join(' ')}`.toLowerCase()
           if (q && !hay.includes(q)) return null
@@ -76,30 +86,38 @@ export function SiteTree({ open, onNavigate }: Props) {
             </div>
           )
         })}
-        <div className="tree-head">관리</div>
-        {role === 'ops' ? (
-          <NavLink
-            to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
-            className="tree-link"
-            onClick={onNavigate}
-          >
-            작업
-          </NavLink>
-        ) : null}
+        <div className="tree-head">설비</div>
+        <NavLink to={siteId ? `/sites/${siteId}/inspections${search}` : `/inspections${search}`} className="tree-link" onClick={onNavigate}>점검</NavLink>
+        <NavLink to={siteId ? `/sites/${siteId}/cycles${search}` : `/cycles${search}`} className="tree-link" onClick={onNavigate}>세척·교체 주기</NavLink>
+        <NavLink to={siteId ? `/sites/${siteId}/photos${search}` : `/photos${search}`} className="tree-link" onClick={onNavigate}>사진·설명</NavLink>
+        <NavLink to={siteId ? `/sites/${siteId}/drawings${search}` : `/drawings${search}`} className="tree-link" onClick={onNavigate}>준공 도면</NavLink>
+        <div className="tree-head">일정</div>
+        <NavLink to={siteId ? `/sites/${siteId}/schedule${search}` : `/schedule${search}`} className="tree-link" onClick={onNavigate}>공사·업체 방문</NavLink>
+        <div className="tree-head">기록</div>
         <NavLink
-          to={siteId ? `/sites/${siteId}/contract${search}` : `/sites/${dutySiteId('events')}/contract${search}`}
+          to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
+          className="tree-link"
+          onClick={onNavigate}
+        >
+          작업 내역
+        </NavLink>
+        <NavLink
+          to={siteId ? `/sites/${siteId}/contract${search}` : `/contract${search}`}
           className="tree-link"
           onClick={onNavigate}
         >
           계약
         </NavLink>
-        <NavLink to={`/packages${search}`} className="tree-link" onClick={onNavigate}>
-          개보수
-        </NavLink>
         <NavLink to={`/settings${search}`} className="tree-link" onClick={onNavigate}>
           설정
         </NavLink>
       </nav>
+      <footer className="tree-foot">
+        <NavLink className="tree-guide" to="/guide" onClick={onNavigate}>
+          이용방법
+        </NavLink>
+        <p className="tree-copy">© 2026 TEKTON</p>
+      </footer>
     </aside>
   )
 }

@@ -65,10 +65,14 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variable files
+# dotenv environment variable files. The app does not read these.
 .env
 .env.*
-!.env.example
+.envrc
+
+# Crash dumps
+*.stackdump
+*.dmp
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -34,6 +34,7 @@ export function LoginFrame({ children }: Props) {
           </div>
         </div>
         <footer className="login-copy">
+          <Link to="/guide">이용방법</Link>
           <Link to="/terms">이용약관</Link>
           <Link to="/privacy">개인정보처리방침</Link>
           <span>© 2026 TEKTON</span>
