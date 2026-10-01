@@ -244,7 +244,7 @@ function ExecDoor({ next }: { next: string | null }) {
         </button>
       </div>
       <button className="login-submit" type="submit" disabled={pending}>
-        {pending ? '여는 중' : '이메일 로그인'}
+        {pending ? '여는 중' : '로그인'}
       </button>
       {error ? <p className="login-error" role="alert">{error}</p> : null}
     </form>

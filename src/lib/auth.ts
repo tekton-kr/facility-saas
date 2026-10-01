@@ -62,8 +62,8 @@ export function homePath(input: Session | Session['role'] = 'ops'): string {
   const role = typeof input === 'string' ? input : input.role
   const siteIds = typeof input === 'string' ? undefined : input.siteIds
   if (role === 'exec') {
-    if (siteIds?.length === 1) return `/apps/power/sites/${siteIds[0]}?role=exec`
-    return '/apps/power?role=exec'
+    if (siteIds?.length === 1) return `/apps/events/sites/${siteIds[0]}?role=exec`
+    return '/apps/events?role=exec'
   }
   const site = siteIds?.[0] ?? dutySiteId('events')
   return `/apps/events/sites/${site}`

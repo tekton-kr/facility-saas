@@ -204,7 +204,7 @@ export function useScope() {
     else copy.set('role', 'exec')
     const text = copy.toString()
     const suffix = text ? `?${text}` : ''
-    if (next === 'exec') navigate(`/apps/power${suffix}`)
+    if (next === 'exec') navigate(`/apps/events${suffix}`)
     else navigate(`/apps/events/sites/${dutySiteId('events')}${suffix}`)
   }
 

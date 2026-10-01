@@ -5,6 +5,7 @@ import { InsightChips } from './InsightChips.tsx'
 import { PortfolioLine } from './PortfolioLine.tsx'
 import { QuietSites } from './QuietSites.tsx'
 import { SiteCards } from './SiteCards.tsx'
+import { SiteServices } from './SiteServices.tsx'
 import { WorkQueue } from './WorkQueue.tsx'
 import { isAppCollected } from '../lib/collection.ts'
 import { getSite } from '../lib/catalog.ts'
@@ -51,6 +52,7 @@ export function ExecBrief() {
           </p>
         </div>
       </div>
+      {site ? <SiteServices siteId={site.id} systems={site.systems} search={search} current={app} /> : null}
       {headline ? <PortfolioLine headline={headline} to={siteHref(headline.siteId)} /> : null}
       {cards.length > 0 ? (
         <SiteCards items={cards} hrefFor={siteHref} />

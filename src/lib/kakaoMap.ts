@@ -11,6 +11,7 @@ export type MapPin = {
   lng?: number
   to?: string
   attention?: boolean
+  waiting?: boolean
 }
 
 function firstHit(rows: Array<{ x: string; y: string }> | undefined): MapPoint | null {
@@ -56,11 +57,15 @@ export function loadKakao(): Promise<NonNullable<Window['kakao']>['maps']> {
 
 export async function locatePin(maps: NonNullable<Window['kakao']>['maps'], pin: MapPin): Promise<MapPoint | null> {
   if (pin.lat != null && pin.lng != null) return { lat: pin.lat, lng: pin.lng }
-  const query = pin.location?.trim()
-  if (!query) return null
+  const queries = [...new Set([pin.location?.trim(), pin.name.trim(), [pin.name, pin.location].filter(Boolean).join(' ').trim()].filter((item): item is string => Boolean(item)))]
+  if (queries.length === 0) return null
   const geocoder = new maps.services.Geocoder()
-  const address = await search((callback) => geocoder.addressSearch(query, callback), maps.services.Status.OK)
-  if (address) return address
   const places = new maps.services.Places()
-  return search((callback) => places.keywordSearch(query, callback), maps.services.Status.OK)
+  for (const query of queries) {
+    const address = await search((callback) => geocoder.addressSearch(query, callback), maps.services.Status.OK)
+    if (address) return address
+    const keyword = await search((callback) => places.keywordSearch(query, callback), maps.services.Status.OK)
+    if (keyword) return keyword
+  }
+  return null
 }

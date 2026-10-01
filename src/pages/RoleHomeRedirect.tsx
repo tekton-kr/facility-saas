@@ -11,7 +11,7 @@ export function RoleHomeRedirect() {
     return <Navigate to={homePath(session)} replace />
   }
   if (role === 'exec') {
-    return <Navigate to={`/apps/power${search}`} replace />
+    return <Navigate to={`/apps/events${search}`} replace />
   }
   return <Navigate to={`/apps/events/sites/${dutySiteId('events')}${search}`} replace />
 }

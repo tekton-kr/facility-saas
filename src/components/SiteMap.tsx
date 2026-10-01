@@ -12,7 +12,7 @@ export function SiteMap({ sites }: Props) {
   const pins = useRef(sites)
   const [note, setNote] = useState('')
   const key = useMemo(
-    () => sites.map((site) => `${site.id}:${site.lat ?? ''}:${site.lng ?? ''}:${site.location ?? ''}:${site.to ?? ''}:${site.attention ? 1 : 0}`).join('|'),
+    () => sites.map((site) => `${site.id}:${site.lat ?? ''}:${site.lng ?? ''}:${site.location ?? ''}:${site.name}:${site.to ?? ''}:${site.attention ? 1 : 0}:${site.waiting ? 1 : 0}`).join('|'),
     [sites],
   )
 
@@ -45,8 +45,12 @@ export function SiteMap({ sites }: Props) {
           const position = new maps.LatLng(point.lat, point.lng)
           const button = document.createElement('button')
           button.type = 'button'
-          button.className = pin.attention ? 'site-map-pin is-attention' : 'site-map-pin'
-          button.textContent = pin.name
+          button.className = pin.attention ? 'site-map-pin is-attention' : pin.waiting ? 'site-map-pin is-wait' : 'site-map-pin'
+          const name = document.createElement('strong')
+          name.textContent = pin.name
+          const state = document.createElement('span')
+          state.textContent = pin.attention ? '이상' : pin.waiting ? '수신 대기' : '이상 없음'
+          button.append(name, state)
           if (pin.to) {
             const href = pin.to
             button.addEventListener('click', () => navigate(href))
@@ -63,8 +67,8 @@ export function SiteMap({ sites }: Props) {
           for (const item of placed) bounds.extend(new maps.LatLng(item.lat, item.lng))
           map.setBounds(bounds)
         }
-        const missing = current.length - placed.length
-        setNote(missing > 0 ? `위치를 찾지 못한 현장이 ${missing}곳입니다.` : '')
+        const missing = current.filter((pin) => !placed.some((item) => item.pin.id === pin.id))
+        setNote(missing.length > 0 ? `지도를 찾지 못한 현장: ${missing.map((pin) => pin.name).join(', ')}` : '')
         map.relayout()
       })
       .catch(() => {

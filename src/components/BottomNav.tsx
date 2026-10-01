@@ -30,7 +30,7 @@ export function BottomNav() {
           key={item.id}
           type="button"
           className={active(item.id) ? 'is-active' : ''}
-          onClick={() => navigate(role === 'exec' && item.id === 'alarms' ? `/apps/power${search}` : item.to)}
+          onClick={() => navigate(role === 'exec' && item.id === 'alarms' ? `/apps/events${search}` : item.to)}
         >
           {item.label}
         </button>

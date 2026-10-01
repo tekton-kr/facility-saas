@@ -1,7 +1,8 @@
 import type { AppId } from '../types/domain.ts'
 import type { SiteDef } from '../types/domain.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
-import { SiteMap } from './SiteMap.tsx'
+import { useScope } from '../lib/useScope.ts'
+import { SiteServices } from './SiteServices.tsx'
 
 const COPY: Record<'events' | 'power' | 'metering' | 'solar', { title: string; note: string; metrics: string[] }> = {
   events: {
@@ -27,6 +28,7 @@ const COPY: Record<'events' | 'power' | 'metering' | 'solar', { title: string; n
 }
 
 export function SiteDashboard({ site, service }: { site: SiteDef; service: AppId }) {
+  const { search } = useScope()
   const focus = service === 'power' || service === 'metering' || service === 'solar' ? service : 'events'
   const copy = COPY[focus]
   const alarms = alarmsForScope({ siteId: site.id }).filter((item) => item.severity === 'critical' || item.severity === 'warning')
@@ -62,15 +64,7 @@ export function SiteDashboard({ site, service }: { site: SiteDef; service: AppId
           <em>설비자동제어가 기본입니다</em>
         </article>
       </section>
-      <SiteMap
-        sites={[{
-          id: site.id,
-          name: site.name,
-          location: site.location,
-          lat: site.lat,
-          lng: site.lng,
-        }]}
-      />
+      <SiteServices siteId={site.id} systems={site.systems} search={search} current={focus} />
       <div className="dash-grid">
         <section className="dash-live" aria-label="실시간">
           <h2>실시간</h2>
