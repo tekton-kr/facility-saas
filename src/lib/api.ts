@@ -24,15 +24,16 @@ const AUTH_ERRORS: Record<string, string> = {
   invalid_phone: '휴대폰 번호 형식이 맞지 않습니다.',
   invalid_email: '이메일 형식이 맞지 않습니다.',
   invalid_body: '인증번호는 숫자 6자리입니다.',
-  invalid_login: '이메일·비밀번호 또는 인증번호가 맞지 않습니다.',
+  invalid_login: '이메일 또는 비밀번호가 맞지 않습니다.',
   phone_not_registered: '등록되지 않은 휴대폰 번호입니다.',
   email_not_registered: '관리단·건물주 계정이 아닙니다.',
   code_recently_sent: '인증번호는 60초에 한 번만 받을 수 있습니다.',
   reset_recently_sent: '비밀번호 찾기는 잠시 뒤에 다시 요청하십시오.',
 }
 
-export function authFailure(err: unknown, fallback: string): string {
+export function authFailure(err: unknown, fallback: string, wording?: Record<string, string>): string {
   const message = err instanceof Error ? err.message : ''
+  if (wording?.[message]) return wording[message]
   if (AUTH_ERRORS[message]) return AUTH_ERRORS[message]
   if (message && !/^[a-z0-9_]+$/.test(message)) return message
   return fallback
@@ -162,6 +163,29 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
 }
 
+function finiteOf(row: Record<string, unknown>, keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = row[key]
+    const parsed = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : Number.NaN
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return undefined
+}
+
+function coordOf(row: Record<string, unknown>): { lat?: number; lng?: number } {
+  const lat = finiteOf(row, ['lat', 'latitude'])
+  const lng = finiteOf(row, ['lng', 'lon', 'longitude'])
+  if (lat != null && lng != null) return { lat, lng }
+  for (const key of ['geo', 'coord', 'coordinates', 'position']) {
+    const nested = asRecord(row[key])
+    if (!nested) continue
+    const nestedLat = finiteOf(nested, ['lat', 'latitude', 'y'])
+    const nestedLng = finiteOf(nested, ['lng', 'lon', 'longitude', 'x'])
+    if (nestedLat != null && nestedLng != null) return { lat: nestedLat, lng: nestedLng }
+  }
+  return {}
+}
+
 function textOf(row: Record<string, unknown>, keys: string[]): string {
   for (const key of keys) {
     const value = row[key]
@@ -210,6 +234,7 @@ export function readSites(body: unknown): SiteDef[] {
       name,
       kind: SITE_KINDS.has(kind as SiteKind) ? kind as SiteKind : 'building',
       location: textOf(row, ['location', 'address', 'addr']),
+      ...coordOf(row),
       connectorIds: [],
       plans: [],
       cameras: [],

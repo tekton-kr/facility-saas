@@ -384,7 +384,7 @@ function StaffDoor({ next }: { next: string | null }) {
       setAccount(await loginWithPhone(phone, otp))
     } catch (err) {
       setAccount(null)
-      setError(authFailure(err, '인증번호가 맞지 않습니다.'))
+      setError(authFailure(err, '인증번호가 맞지 않습니다.', { invalid_login: '인증번호가 맞지 않습니다.' }))
     } finally {
       setChecking(false)
     }

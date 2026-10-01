@@ -9,6 +9,7 @@ import { EquipmentPage } from './pages/EquipmentPage.tsx'
 import { ForbiddenPage } from './pages/ForbiddenPage.tsx'
 import { LobbyPage } from './pages/LobbyPage.tsx'
 import { DeskPage, LoginPage } from './pages/LoginPage.tsx'
+import { PrivacyPage, TermsPage } from './pages/LegalPage.tsx'
 import { PasswordPage } from './pages/PasswordPage.tsx'
 import { NotifyPage } from './pages/NotifyPage.tsx'
 import { StationPage } from './pages/StationPage.tsx'
@@ -32,6 +33,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/login/password" element={<PasswordPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/desk" element={<DeskPage />} />
           <Route path="/station" element={<StationPage />} />
           <Route path="/w" element={<WorkspacePage />} />

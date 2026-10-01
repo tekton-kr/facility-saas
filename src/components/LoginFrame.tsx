@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { LoginPreview } from './LoginPreview.tsx'
 
 type Props = {
@@ -32,7 +33,11 @@ export function LoginFrame({ children }: Props) {
             {children}
           </div>
         </div>
-        <p className="login-copy">© 2026 TEKTON. All rights reserved.</p>
+        <footer className="login-copy">
+          <Link to="/terms">이용약관</Link>
+          <Link to="/privacy">개인정보처리방침</Link>
+          <span>© 2026 TEKTON</span>
+        </footer>
       </div>
     </div>
   )

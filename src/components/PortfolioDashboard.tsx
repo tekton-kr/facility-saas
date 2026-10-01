@@ -3,6 +3,7 @@ import type { AppId } from '../types/domain.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
 import { visibleSites } from '../lib/siteScope.ts'
 import { useScope } from '../lib/useScope.ts'
+import { SiteMap } from './SiteMap.tsx'
 
 const TITLE: Record<'events' | 'power' | 'metering' | 'solar', string> = {
   events: '설비자동제어',
@@ -54,6 +55,17 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
           <em>설비자동제어가 기본입니다</em>
         </article>
       </section>
+      <SiteMap
+        sites={sites.map(({ site, alarms }) => ({
+          id: site.id,
+          name: site.name,
+          location: site.location,
+          lat: site.lat,
+          lng: site.lng,
+          to: `/apps/${service}/sites/${site.id}${search}`,
+          attention: alarms.length > 0,
+        }))}
+      />
       <section className="dash-sites" aria-label="현장 목록">
         {sites.map(({ site, alarms }) => (
           <Link

@@ -1,6 +1,7 @@
 import type { AppId } from '../types/domain.ts'
 import type { SiteDef } from '../types/domain.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
+import { SiteMap } from './SiteMap.tsx'
 
 const COPY: Record<'events' | 'power' | 'metering' | 'solar', { title: string; note: string; metrics: string[] }> = {
   events: {
@@ -61,6 +62,15 @@ export function SiteDashboard({ site, service }: { site: SiteDef; service: AppId
           <em>설비자동제어가 기본입니다</em>
         </article>
       </section>
+      <SiteMap
+        sites={[{
+          id: site.id,
+          name: site.name,
+          location: site.location,
+          lat: site.lat,
+          lng: site.lng,
+        }]}
+      />
       <div className="dash-grid">
         <section className="dash-live" aria-label="실시간">
           <h2>실시간</h2>

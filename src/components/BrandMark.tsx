@@ -23,10 +23,9 @@ export function BrandMark({ live = false }: Props) {
         </svg>
       ) : null}
       <span className="brand-mark-plate">
-        <svg className="brand-mark-glyph" viewBox="0 0 32 32">
-          <rect x="7.4" y="8.6" width="17.2" height="2.3" rx="0.2" />
-          <rect x="14.85" y="8.6" width="2.3" height="13.4" rx="0.2" />
-          <rect x="12.4" y="21.8" width="7.2" height="1.35" rx="0.2" />
+        <svg className="brand-mark-glyph" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M5.2 28V15.6a10.8 10.8 0 0 1 21.6 0V28" />
+          <rect x="13.5" y="16.2" width="5" height="5" className="is-lit" />
         </svg>
         {live ? <span className="brand-mark-pip" /> : null}
       </span>

@@ -59,6 +59,8 @@ export type SiteDef = {
   name: string
   kind: SiteKind
   location: string
+  lat?: number
+  lng?: number
   areaM2?: number
   photo?: string
   connectorIds: string[]
