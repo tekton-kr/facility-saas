@@ -14,7 +14,7 @@ export function BottomNav() {
         { id: 'wall', label: '상황판', to: `/apps/events${search}` },
         { id: 'board', label: '대시보드', to: duty ? `/apps/events/sites/${duty}${search}` : `/apps/events${search}` },
         { id: 'inspect', label: '점검', to: duty ? `/sites/${duty}/inspections${search}` : `/inspections${search}` },
-        { id: 'schedule', label: '일정표', to: duty ? `/sites/${duty}/calendar${search}` : `/calendar${search}` },
+        { id: 'schedule', label: '방문', to: duty ? `/sites/${duty}/schedule${search}` : `/schedule${search}` },
         { id: 'contract', label: '유지보수', to: duty ? `/sites/${duty}/contract${search}` : `/contract${search}` },
       ]
     : [
@@ -30,7 +30,7 @@ export function BottomNav() {
     if (id === 'wall') return path === '/apps/events'
     if (id === 'board') return path.startsWith('/apps/events/sites/')
     if (id === 'inspect') return path.includes('/inspections')
-    if (id === 'schedule') return path.includes('/calendar') || path.includes('/schedule') || path.includes('/roster')
+    if (id === 'schedule') return path.includes('/schedule')
     if (id === 'contract') return path.endsWith('/contract') || path === '/contract'
     if (id === 'events') return path.startsWith('/apps/events')
     if (id === 'power') return path.startsWith('/apps/power')

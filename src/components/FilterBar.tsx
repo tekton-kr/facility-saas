@@ -70,7 +70,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
             <span>{heading.kicker}</span>
             <div className="filter-title-line">
               <strong>{heading.title}</strong>
-              <SiteSwitch siteId={siteId} onPick={goSite} onAll={goHome} />
+              {siteId ? <SiteSwitch siteId={siteId} onPick={goSite} /> : null}
             </div>
           </div>
         ) : null}
@@ -169,7 +169,7 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
   )
 }
 
-function SiteSwitch({ siteId, onPick, onAll }: { siteId: string | undefined; onPick: (id: string) => void; onAll: () => void }) {
+function SiteSwitch({ siteId, onPick }: { siteId: string; onPick: (id: string) => void }) {
   const sites = visibleSites()
   const [open, setOpen] = useState(false)
   useEffect(() => {
@@ -187,7 +187,7 @@ function SiteSwitch({ siteId, onPick, onAll }: { siteId: string | undefined; onP
       window.removeEventListener('pointerdown', close)
     }
   }, [open])
-  if (sites.length === 0) return null
+  if (sites.length < 2) return null
 
   return (
     <div className="site-switch" onPointerDown={(event) => event.stopPropagation()}>
@@ -204,7 +204,6 @@ function SiteSwitch({ siteId, onPick, onAll }: { siteId: string | undefined; onP
       </button>
       {open ? (
         <div className="site-switch-menu" role="menu">
-          <button type="button" role="menuitem" onClick={() => { onAll(); setOpen(false) }}>전체 현장</button>
           {sites.map((site) => (
             <button
               key={site.id}

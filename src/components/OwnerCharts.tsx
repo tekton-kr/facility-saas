@@ -59,7 +59,7 @@ export function OwnerMix({ slices, total }: { slices: Slice[]; total: number }) 
     ],
   }), [slices, total, tone])
 
-  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 168 }} />
+  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 96 }} />
 }
 
 export function OwnerWeek({ labels, values }: { labels: string[]; values: number[] }) {
@@ -99,7 +99,7 @@ export function OwnerWeek({ labels, values }: { labels: string[]; values: number
     ],
   }), [labels, values, tone])
 
-  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 160 }} />
+  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 108 }} />
 }
 
 export function OwnerGauge({ value, max, color }: { value: number; max: number; color: string }) {
@@ -133,14 +133,14 @@ export function OwnerGauge({ value, max, color }: { value: number; max: number; 
     ],
   }), [value, max, color, tone])
 
-  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 148 }} />
+  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 78 }} />
 }
 
 export function OwnerLine({ labels, values }: { labels: string[]; values: number[] }) {
   const tone = useTone()
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
-    grid: { left: 36, right: 12, top: 16, bottom: 24 },
+    grid: { left: 36, right: 12, top: 8, bottom: 20 },
     tooltip: {
       trigger: 'axis',
       backgroundColor: tone.tip,
@@ -171,5 +171,5 @@ export function OwnerLine({ labels, values }: { labels: string[]; values: number
     ],
   }), [labels, values, tone])
 
-  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 180 }} />
+  return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 92 }} />
 }

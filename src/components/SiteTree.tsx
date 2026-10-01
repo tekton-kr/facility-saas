@@ -49,7 +49,7 @@ function Mark({ id }: { id: string }) {
 function situationPath(pathname: string): boolean {
   if (/^\/apps\/[^/]+$/.test(pathname)) return true
   if (pathname.startsWith('/settings')) return true
-  return /\/(inspections|cycles|photos|drawings|meters|schedule|calendar|contract)(\/|$)/.test(pathname)
+  return /\/(inspections|cycles|photos|drawings|meters|schedule|contract)(\/|$)/.test(pathname)
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
@@ -99,7 +99,7 @@ export function SiteTree({ open, onNavigate }: Props) {
               onClick={onNavigate}
             >
               <Mark id="overview" />
-              종합화면
+              전체 현장
             </NavLink>
             <div className="tree-head">설비</div>
             <NavLink to={record('inspections')} className="tree-link" onClick={onNavigate}><Mark id="check" />점검</NavLink>
@@ -108,7 +108,6 @@ export function SiteTree({ open, onNavigate }: Props) {
             <NavLink to={record('drawings')} className="tree-link" onClick={onNavigate}><Mark id="draw" />준공 도면</NavLink>
             <NavLink to={record('meters')} className="tree-link" onClick={onNavigate}><Mark id="gauge" />설비 전력량계</NavLink>
             <div className="tree-head">일정</div>
-            <NavLink to={record('calendar')} className="tree-link" onClick={onNavigate}><Mark id="cal" />일정표</NavLink>
             <NavLink to={record('schedule')} className="tree-link" onClick={onNavigate}><Mark id="visit" />공사·업체 방문</NavLink>
             <div className="tree-head">기록</div>
             <NavLink to={record('contract')} className="tree-link" onClick={onNavigate}><Mark id="contract" />유지보수</NavLink>

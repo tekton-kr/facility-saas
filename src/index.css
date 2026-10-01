@@ -4753,6 +4753,83 @@ button.drawer-open {
   background: var(--tone-bg);
 }
 
+.main:has(.cmd.is-wall) {
+  overflow: hidden;
+}
+
+.cmd.is-wall {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  overflow: hidden;
+}
+
+.cmd.is-wall .cmd-head {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.cmd.is-wall .cmd-head h1 {
+  font-size: 22px;
+}
+
+.cmd.is-wall .cmd-services,
+.cmd.is-wall .cmd-gauges {
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.cmd.is-wall .cmd-service {
+  min-height: 0;
+  padding: 8px 12px;
+}
+
+.cmd.is-wall .cmd-service strong {
+  font-size: 26px;
+}
+
+.cmd.is-wall .cmd-panel {
+  padding: 8px 10px;
+}
+
+.cmd.is-wall .cmd-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) minmax(108px, 0.42fr);
+  gap: 8px;
+}
+
+.cmd.is-wall .cmd-sites,
+.cmd.is-wall .cmd-alarms,
+.cmd.is-wall .cmd-week {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cmd.is-wall .cmd-sites {
+  display: flex;
+  flex-direction: column;
+}
+
+.cmd.is-wall .cmd-sites ul,
+.cmd.is-wall .cmd-alarms ul {
+  min-height: 0;
+  overflow: auto;
+}
+
+.cmd.is-wall .cmd-map-wrap .site-map {
+  min-height: 0;
+  height: 100%;
+}
+
+.cmd.is-wall .cmd-line {
+  flex: 0 0 auto;
+}
+
 .cmd {
   min-height: 100%;
   padding: 16px;
@@ -5257,6 +5334,13 @@ button.drawer-open {
   opacity: 1;
 }
 
+.shell:has(.cmd) .alarm .empty {
+  border-color: var(--tone-line);
+  background: color-mix(in srgb, var(--tone-text) 8%, var(--tone-field));
+  color: var(--tone-text);
+  font-weight: 650;
+}
+
 .shell:has(.cmd) .alarm-item,
 .shell:has(.cmd) .alarm-card,
 .shell:has(.cmd) .alarm-tab.is-on {
@@ -5692,6 +5776,29 @@ button.manage-row {
   border-color: var(--tone-accent);
   background: transparent;
   color: var(--tone-accent);
+}
+
+.shell[data-site] .brand,
+.shell[data-site] .tree,
+.shell[data-site] .filter,
+.shell[data-site]:has(.cmd) .brand,
+.shell[data-site].theme-navy:has(.cmd) .brand,
+.shell[data-site].theme-teal:has(.cmd) .brand,
+.shell[data-site].is-light:has(.cmd) .brand {
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--site-tint) 38%, var(--tone-side, #0d1116)), var(--tone-side, #0d1116) 72%);
+}
+
+.shell[data-site] .main:has(.cmd),
+.shell[data-site] .cmd {
+  background:
+    radial-gradient(980px 520px at 92% -8%, color-mix(in srgb, var(--site-tint) 46%, transparent), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--site-tint) 16%, var(--tone-bg)), var(--tone-bg) 42%);
+}
+
+.shell[data-site] .desk-tile,
+.shell[data-site] .cmd-panel {
+  background: color-mix(in srgb, var(--site-tint) 12%, var(--tone-panel-deep, #0c1c2e));
 }
 
 .cmd.manage .field-note,

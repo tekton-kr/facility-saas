@@ -215,12 +215,22 @@ $RECYCLE.BIN/
 # Secrets / keys
 *.pem
 *.key
+*.crt
+*.cer
 *.p12
 *.pfx
+id_rsa
+id_ed25519
 credentials.json
 *.secret
 .env.local
 .env.*.local
+*.env
+
+# Local service caches
+.wrangler/
+.supabase/
+public/layout-check-sw.js
 
 # Test / e2e artifacts
 test-results/

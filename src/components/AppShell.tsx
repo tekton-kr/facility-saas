@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { BrandMark } from './BrandMark.tsx'
 import { AlarmRail, type RailMode } from './AlarmRail.tsx'
@@ -9,10 +9,10 @@ import { SiteTree } from './SiteTree.tsx'
 import { useCompact } from '../lib/media.ts'
 import { useField } from '../lib/useField.ts'
 import { useScope } from '../lib/useScope.ts'
-import { readTheme, type ThemeId } from '../lib/theme.ts'
+import { readTheme, siteTint, type ThemeId } from '../lib/theme.ts'
 
 export function AppShell() {
-  const { search, palette } = useScope()
+  const { search, palette, siteId } = useScope()
   useField()
   const compact = useCompact()
   const [treeOpen, setTreeOpen] = useState(false)
@@ -47,8 +47,14 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const tint = siteTint(siteId)
+
   return (
-    <div className={`shell theme-${theme}${light ? ' is-light' : ''}${rail === 'closed' ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}>
+    <div
+      className={`shell theme-${theme}${light ? ' is-light' : ''}${rail === 'closed' ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}
+      data-site={siteId || undefined}
+      style={tint ? { '--site-tint': tint } as CSSProperties : undefined}
+    >
       <div className="brand">
         <Link className="brand-lockup" to={`/apps/events${search}`} title="T-ARCH · 시설을 돌보다">
           <BrandMark />

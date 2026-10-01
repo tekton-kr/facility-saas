@@ -253,7 +253,7 @@ export function startNotify(alarmId: string, siteId: string): Session {
 
 let issuedPassword = ''
 
-async function applyLiveSites(preferred: string[] | undefined): Promise<string[]> {
+async function applyLiveSites(): Promise<string[]> {
   const sites = await fetchSites()
   hydrateSnapshot({
     catalog: { connectors: getCatalog().connectors, sites },
@@ -262,9 +262,7 @@ async function applyLiveSites(preferred: string[] | undefined): Promise<string[]
     telemetry: {},
     syncAt: new Date().toISOString(),
   })
-  const known = new Set(sites.map((site) => site.id))
-  const listed = (preferred ?? []).filter((id) => known.has(id))
-  return listed.length > 0 ? listed : sites.map((site) => site.id)
+  return sites.map((site) => site.id)
 }
 
 export async function acceptLogin(result: LoginResult, extra: { phone?: string; currentPassword?: string; entry: Entry }): Promise<Session> {
@@ -273,7 +271,7 @@ export async function acceptLogin(result: LoginResult, extra: { phone?: string; 
   issuedPassword = result.mustChangePassword ? (extra.currentPassword ?? '') : ''
   setToken(result.token)
   try {
-    const siteIds = await applyLiveSites(result.siteIds)
+    const siteIds = await applyLiveSites()
     const session: Session = {
       tenantId: tenant.id,
       name: result.name || result.email || extra.phone || '계정',
@@ -359,7 +357,7 @@ export function subscribeAuth(onChange: () => void) {
 export async function restoreSession(): Promise<Session | null> {
   const session = getSession()
   if (!session || !getToken()) return null
-  const siteIds = await applyLiveSites(session.siteIds)
+  const siteIds = await applyLiveSites()
   const next = { ...session, siteIds }
   setSession(next)
   return next

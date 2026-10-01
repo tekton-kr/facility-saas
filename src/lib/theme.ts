@@ -114,3 +114,13 @@ export function writeTheme(id: ThemeId) {
   }
   window.dispatchEvent(new Event('t-arch-theme'))
 }
+
+export function siteTint(siteId: string | undefined): string | undefined {
+  if (!siteId) return undefined
+  let hash = 0
+  for (let index = 0; index < siteId.length; index += 1) {
+    hash = (hash * 33 + siteId.charCodeAt(index)) >>> 0
+  }
+  const hue = (hash % 12) * 30
+  return `hsl(${hue} 68% 48%)`
+}

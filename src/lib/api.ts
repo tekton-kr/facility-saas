@@ -202,12 +202,17 @@ function siteList(body: unknown): unknown[] {
   if (Array.isArray(body)) return body
   const bag = asRecord(body)
   if (!bag) return []
-  for (const key of ['sites', 'items', 'data', 'rows', 'list', 'result']) {
+  const keys = ['sites', 'items', 'data', 'rows', 'list', 'result', 'content', 'records', 'buildings']
+  for (const key of keys) {
     const value = bag[key]
     if (Array.isArray(value)) return value
     const nested = asRecord(value)
-    if (nested && Array.isArray(nested.sites)) return nested.sites
+    if (!nested) continue
+    for (const inner of ['sites', 'items', 'content', 'records', 'rows', 'list']) {
+      if (Array.isArray(nested[inner])) return nested[inner] as unknown[]
+    }
   }
+  if (textOf(bag, ['id', 'siteId', 'site_id', 'siteCode', 'site_code'])) return [bag]
   return []
 }
 
@@ -228,8 +233,8 @@ export function readSites(body: unknown): SiteDef[] {
   return siteList(body).flatMap((item) => {
     const row = asRecord(item)
     if (!row) return []
-    const id = textOf(row, ['id', 'siteId', 'site_id'])
-    const name = textOf(row, ['name', 'siteName', 'site_name', 'title'])
+    const id = textOf(row, ['id', 'siteId', 'site_id', 'siteCode', 'site_code'])
+    const name = textOf(row, ['name', 'siteName', 'site_name', 'buildingName', 'building_name', 'siteNm', 'title', 'label'])
     if (!id || !name) return []
     const kind = textOf(row, ['kind', 'type'])
     return [{
