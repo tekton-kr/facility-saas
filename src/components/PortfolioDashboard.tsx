@@ -110,7 +110,7 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
       <header className="cmd-head">
         <div>
           <p>관리단 · 건물주</p>
-          <h1>전체 현장</h1>
+          <h1>현황</h1>
         </div>
         <p>
           배정 건물 {realSites.length}

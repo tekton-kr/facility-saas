@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type Notice } from '../lib/api.ts'
 import { getSite } from '../lib/catalog.ts'
@@ -14,7 +15,7 @@ import {
 import { formatDateTime, formatTime, KIND_ALARM_LABEL, SEVERITY_LABEL } from '../lib/format.ts'
 import { visitsOn } from '../lib/maintain.ts'
 import { visibleSites } from '../lib/siteScope.ts'
-import { alarmsForScope } from '../lib/telemetry.ts'
+import { liveAlarms, subscribeTelemetry } from '../lib/telemetry.ts'
 import { useField } from '../lib/useField.ts'
 import { useScope } from '../lib/useScope.ts'
 
@@ -36,9 +37,11 @@ type Props = {
 }
 
 export function AlarmRail({ mode, onMode }: Props) {
-  const { siteId, app, eventHref, search } = useScope()
+  const { siteId, eventHref, search } = useScope()
   useField()
-  const alarms = alarmsForScope({ siteId, app: app === 'events' ? 'events' : app })
+  const [, setTick] = useState(0)
+  useEffect(() => subscribeTelemetry(() => setTick((value) => value + 1)), [])
+  const alarms = liveAlarms(siteId)
   const critical = alarms.filter((item) => item.severity === 'critical').length
   const warning = alarms.filter((item) => item.severity === 'warning').length
   const notices: Notice[] = []

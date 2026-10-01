@@ -3,15 +3,10 @@ import { Link } from 'react-router-dom'
 
 export function LegalFrame({ title, lede, wide, children }: { title: string; lede?: string; wide?: boolean; children: ReactNode }) {
   useEffect(() => {
-    const previous = document.title
-    document.title = `${title} · T-ARCH 시설관리플랫폼`
     const id = window.location.hash.replace('#', '')
     const target = id ? document.getElementById(id) : null
     if (target) target.scrollIntoView()
     else window.scrollTo(0, 0)
-    return () => {
-      document.title = previous
-    }
   }, [title])
 
   return (

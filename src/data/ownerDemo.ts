@@ -1,5 +1,5 @@
 export const DEMO_SERVICES = [
-  { id: 'events' as const, label: '설비자동제어', value: '24.6', unit: '°C', note: '실내온도 · 운전 18대' },
+  { id: 'events' as const, label: '기계설비', value: '24.6', unit: '°C', note: '실내온도 · 운전 18대' },
   { id: 'power' as const, label: '전력', value: '428', unit: 'kW', note: '현재 전력 · 역률 0.96' },
   { id: 'metering' as const, label: '원격검침', value: '3,842', unit: 'kWh', note: '금일 전력량 · 수도 42 m³' },
   { id: 'solar' as const, label: '제로에너지', value: '18', unit: '%', note: '자립률 · 발전 186 kWh' },

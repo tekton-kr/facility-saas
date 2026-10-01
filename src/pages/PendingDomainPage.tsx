@@ -3,6 +3,7 @@ import { DomainDesk, type DeskId } from '../components/DomainDesk.tsx'
 import { getSite } from '../lib/catalog.ts'
 
 const DESKS: Record<string, DeskId> = {
+  light: 'light',
   ehp: 'ehp',
   fire: 'fire',
   elevator: 'elevator',

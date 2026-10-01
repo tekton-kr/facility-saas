@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { accountLabel, homePath, leaveLabel, signOut } from '../lib/auth.ts'
+import { accountLabel, getSession, getToken, homePath, leaveLabel, signOut } from '../lib/auth.ts'
 import { getSite } from '../lib/catalog.ts'
 import { DEMO_SITES } from '../data/ownerDemo.ts'
 import { useAuth } from '../lib/useAuth.ts'
@@ -10,12 +10,12 @@ import { PropertyFilter } from './PropertyFilter.tsx'
 import { TimeWindow } from './TimeWindow.tsx'
 import { hasPortfolio, visibleSites } from '../lib/siteScope.ts'
 import { formatDateTime, KIND_LABEL, ROLE_LABEL } from '../lib/format.ts'
-import { alarmsForScope, lastSyncAt } from '../lib/telemetry.ts'
+import { lastSyncAt, liveAlarms, siteHealth, subscribeTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 import type { AppId, Role } from '../types/domain.ts'
 
 const SERVICE_LABEL: Partial<Record<AppId, string>> = {
-  events: '설비자동제어',
+  events: '기계설비',
   power: '전력',
   metering: '원격검침',
   solar: '제로에너지',
@@ -30,13 +30,14 @@ function headerCopy(pathname: string, siteName: string | undefined, app: AppId |
   const place = siteName ?? '전체 현장'
   if (pathname.startsWith('/profile')) return { kicker: '계정', title: '프로필' }
   if (pathname.startsWith('/settings')) return { kicker: '계정', title: place }
+  if (pathname.startsWith('/reports')) return { kicker: '대시보드', title: '리포트' }
   if (!siteName && /^\/apps\/[^/]+$/.test(pathname)) {
     return { kicker: '대시보드', title: '배정 현황' }
   }
-  if (/\/(roster|work)(\/|$)/.test(pathname) || pathname.includes('/domains/')) {
+  if (/\/(roster|work|staff)(\/|$)/.test(pathname) || pathname.includes('/domains/')) {
     return { kicker: '현장', title: place }
   }
-  if (/\/(inspections|cycles|photos|drawings|meters|schedule|contract|calendar|packages)(\/|$)/.test(pathname)) {
+  if (/\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|calendar|packages|assets)(\/|$)/.test(pathname)) {
     return { kicker: '대시보드', title: place }
   }
   return {
@@ -56,7 +57,8 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
   const location = useLocation()
   const { app, siteId, range, query, role, command, search, view, patchParams, goSite, goHome, goRole } = useScope()
   const sync = lastSyncAt()
-  const critical = alarmsForScope({ siteId, app: 'events' }).filter((item) => item.severity === 'critical').length
+  const alarms = liveAlarms(siteId)
+  const critical = alarms.filter((item) => item.severity === 'critical').length
   const ownerHome = role === 'exec' && !command
   const place = siteLabel(siteId)
   const heading = view === 'flow'
@@ -119,16 +121,19 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
           </div>
         )}
         {compact || ownerHome ? null : <span className="filter-sync">마지막 동기화 {formatDateTime(sync)}</span>}
-        <div className="account-chip">
-          {compact ? null : (
-            <Link className="filter-user" to="/profile">
-              {session ? accountLabel(session) : role === 'exec' ? '관리단 · 건물주' : '관리소장 · 시설직원'}
-            </Link>
-          )}
-          {compact ? <Link className="filter-user" to="/profile">프로필</Link> : null}
-          <LogoutButton label={leaveLabel(session?.entry)} />
+        <div className="filter-end">
+          <SystemStatus compact={compact} siteId={siteId} />
+          <div className="account-chip">
+            {compact ? null : (
+              <Link className="filter-user" to="/profile">
+                {session ? accountLabel(session) : role === 'exec' ? '관리단 · 건물주' : '관리소장 · 시설직원'}
+              </Link>
+            )}
+            {compact ? <Link className="filter-user" to="/profile">프로필</Link> : null}
+            <LogoutButton label={leaveLabel(session?.entry)} />
+          </div>
+          <FullscreenButton />
         </div>
-        <FullscreenButton />
         {compact && app !== 'events' ? (
           <Link className="alarm-badge" to={`/apps/events${siteId ? `/sites/${siteId}` : ''}${search}`}>
             위험 {critical}
@@ -170,6 +175,78 @@ export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
         </div>
       )}
     </header>
+  )
+}
+
+function SystemStatus({ compact, siteId }: { compact: boolean; siteId?: string }) {
+  const [open, setOpen] = useState(false)
+  const [, setTick] = useState(0)
+  useEffect(() => subscribeTelemetry(() => setTick((value) => value + 1)), [])
+  useEffect(() => {
+    if (!open) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const session = getSession()
+  const signedIn = Boolean(session && getToken())
+  const health = siteHealth(siteId)
+  const alarms = liveAlarms(siteId)
+  const collected = health.filter((item) => item.collected)
+  const offline = health.filter((item) => item.offline)
+  const delayed = health.filter((item) => item.delayed && !item.offline)
+  const silent = health.filter((item) => !item.collected)
+  const sync = lastSyncAt()
+  const age = Date.now() - new Date(sync).getTime()
+  const stale = !Number.isFinite(age) || age > 24 * 60 * 60 * 1000
+  const tone = !signedIn ? 'down' : offline.length > 0 ? 'down' : silent.length === health.length && health.length > 0 ? 'wait' : stale || delayed.length > 0 ? 'late' : 'ok'
+  const label = !signedIn ? '끊김' : offline.length > 0 ? '통신 이상' : silent.length === health.length && health.length > 0 ? '수집 없음' : delayed.length > 0 || stale ? '지연' : '수집 중'
+  const summary = [
+    `수집 ${collected.length}곳, 수신 없음 ${silent.length}곳`,
+    offline.length > 0 ? `통신 이상 ${offline.map((item) => item.name).join(', ')}` : '확인된 통신 이상은 없습니다',
+    `알람 ${alarms.length}`,
+  ].join('. ')
+
+  return (
+    <div className="sys-status-wrap">
+      <button
+        className={`sys-status is-${tone}${compact ? ' is-compact' : ''}`}
+        type="button"
+        aria-expanded={open}
+        aria-label={`시스템 ${label}. ${summary}`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <i />
+        {compact ? null : (
+          <>
+            <em>시스템</em>
+            {label}
+          </>
+        )}
+        {alarms.length > 0 ? <b>{alarms.length}</b> : null}
+      </button>
+      {open ? (
+        <div className="sys-panel" role="dialog" aria-label="시스템 상태">
+          <p>수집</p>
+          <strong>{collected.length}곳 수신 · {silent.length}곳 수신 없음</strong>
+          <p>현장 통신</p>
+          {offline.length === 0 && delayed.length === 0 ? (
+            <strong>확인된 통신 이상은 없습니다. 상태를 받지 못한 현장은 판단하지 않습니다.</strong>
+          ) : (
+            <ul>
+              {offline.map((item) => <li key={item.id}>{item.name} · 통신 이상</li>)}
+              {delayed.map((item) => <li key={item.id}>{item.name} · 수신 지연</li>)}
+            </ul>
+          )}
+          <p>알람</p>
+          <strong>{alarms.length === 0 ? '없음' : `${alarms.length}`}</strong>
+          <p>목록 수신 {formatDateTime(sync)}</p>
+        </div>
+      ) : null}
+    </div>
   )
 }
 

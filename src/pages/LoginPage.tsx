@@ -256,19 +256,6 @@ export function DeskPage() {
   const [params] = useSearchParams()
   const next = safeNext(params.get('next'))
 
-  useEffect(() => {
-    const meta = document.createElement('meta')
-    meta.name = 'robots'
-    meta.content = 'noindex, nofollow, noarchive'
-    document.head.appendChild(meta)
-    const previous = document.title
-    document.title = '통합관제'
-    return () => {
-      meta.remove()
-      document.title = previous
-    }
-  }, [])
-
   if (session?.mustChangePassword) {
     return <Navigate to="/login/password" replace />
   }

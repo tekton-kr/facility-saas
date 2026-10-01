@@ -40,6 +40,18 @@ export type Drawing = {
   sample: true
 }
 
+export type StaffJob = {
+  id: string
+  siteId: string
+  name: string
+  shift: '주간' | '야간'
+  title: string
+  equipment: string
+  doneAt: string
+  result: string
+  sample: true
+}
+
 export type Visit = {
   id: string
   siteId: string
@@ -100,6 +112,25 @@ export function drawingsFor(siteId?: string): Drawing[] {
     { id: `${site.id}-dw-2`, siteId: site.id, name: '수변전 단선도', equipment: '수배전반', kind: '계통도', sample: true as const },
     { id: `${site.id}-dw-3`, siteId: site.id, name: '소화 배관 준공도', equipment: '소화 펌프', kind: '준공도', sample: true as const },
   ])
+}
+
+const STAFF_JOBS: Omit<StaffJob, 'id' | 'siteId' | 'sample'>[] = [
+  { name: '김현장', shift: '주간', title: '공조기 필터 상태 확인', equipment: '공조기', doneAt: '2026-10-01T09:40:00+09:00', result: '차압이 교체 기준 아래였습니다.' },
+  { name: '김현장', shift: '주간', title: '기계실 순찰', equipment: '냉동기', doneAt: '2026-09-30T16:10:00+09:00', result: '누수와 이상음은 없었습니다.' },
+  { name: '김현장', shift: '주간', title: '급기 온도 확인', equipment: '공조기', doneAt: '2026-09-28T11:20:00+09:00', result: '설정 온도와 같았습니다.' },
+  { name: '이소장', shift: '주간', title: '수배전반 순시', equipment: '수배전반', doneAt: '2026-10-01T14:05:00+09:00', result: '열점과 냄새는 없었습니다.' },
+  { name: '이소장', shift: '주간', title: '조명 회로 점검', equipment: '지하 주차장', doneAt: '2026-09-29T10:30:00+09:00', result: '꺼진 회로 2개를 다시 넣었습니다.' },
+  { name: '최시설', shift: '야간', title: '급수 펌프 확인', equipment: '급수 펌프', doneAt: '2026-10-01T22:15:00+09:00', result: '교대 운전이 정상이었습니다.' },
+  { name: '최시설', shift: '야간', title: '옥상 장비 순찰', equipment: '냉각탑', doneAt: '2026-09-27T23:40:00+09:00', result: '팬 이상음은 없었습니다.' },
+]
+
+export function staffWorkFor(siteId?: string): StaffJob[] {
+  return sites(siteId).flatMap((site) => STAFF_JOBS.map((item) => ({
+    id: `${site.id}-${item.name}-${item.doneAt}`,
+    siteId: site.id,
+    ...item,
+    sample: true as const,
+  })))
 }
 
 export function visitsOn(siteId: string | undefined, day: string): Visit[] {

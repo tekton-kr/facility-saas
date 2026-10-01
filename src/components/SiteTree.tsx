@@ -9,8 +9,11 @@ type Props = {
 }
 
 const BOARD_APPS: { id: AppId; label: string }[] = [
-  { id: 'events', label: '자동제어' },
+  { id: 'events', label: '기계설비' },
   { id: 'power', label: '전력' },
+]
+
+const BOARD_REST: { id: AppId; label: string }[] = [
   { id: 'metering', label: '원격검침' },
 ]
 
@@ -26,6 +29,7 @@ function Mark({ id }: { id: string }) {
       {id === 'overview' ? <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /> : null}
       {id === 'control' ? <path d="M4 8h16M4 16h16M8 8v8M16 8v8" /> : null}
       {id === 'power' ? <path d="M13 3 6 13h5l-1 8 8-12h-5l1-6Z" /> : null}
+      {id === 'light' ? <path d="M12 3a5 5 0 0 1 2.2 9.6V15H9.8v-2.4A5 5 0 0 1 12 3ZM10 17h4M11 20h2" /> : null}
       {id === 'meter' ? <path d="M4 18h16M7 18V9M12 18V6M17 18v-5" /> : null}
       {id === 'ehp' ? <path d="M12 3v3M12 18v3M4.5 7.5 7 9M17 15l2.5 1.5M4.5 16.5 7 15M17 9l2.5-1.5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" /> : null}
       {id === 'fire' ? <path d="M12 3s5 4 5 8a5 5 0 0 1-10 0c0-2 2-3 2-5 2 1 3 2 3 4 0-3 0-5 0-7Z" /> : null}
@@ -33,6 +37,7 @@ function Mark({ id }: { id: string }) {
       {id === 'ev' ? <path d="M4 15h14l-1-5H8L4 15Zm2 0v2m8-2v2M14 7h3l1 3" /> : null}
       {id === 'park' ? <path d="M7 19V5h6.5a4 4 0 0 1 0 8H7" /> : null}
       {id === 'check' ? <path d="M5 12.5 9 16l10-9" /> : null}
+      {id === 'diag' ? <path d="M4 12h3l2-5 4 10 2-5h5" /> : null}
       {id === 'cycle' ? <path d="M7 7h8l2 3-2 3H7L5 10l2-3ZM9 16h6" /> : null}
       {id === 'photo' ? <path d="M4 7h4l1.5-2h5L16 7h4v11H4V7ZM12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /> : null}
       {id === 'draw' ? <path d="M5 5h10l4 4v10H5V5ZM15 5v4h4" /> : null}
@@ -40,8 +45,11 @@ function Mark({ id }: { id: string }) {
       {id === 'cal' ? <path d="M5 6h14v13H5V6ZM5 10h14M8 4v4M16 4v4" /> : null}
       {id === 'visit' ? <path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.6-2.5 2.4-4 5-4s4.4 1.5 5 4M16 11a2.5 2.5 0 1 0 0-5M16 15c2 .4 3.4 1.6 4 4" /> : null}
       {id === 'roster' ? <path d="M8 6h11M8 12h11M8 18h11M5 6h.01M5 12h.01M5 18h.01" /> : null}
+      {id === 'crew' ? <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.6-2.6 2.6-4 6-4s5.4 1.4 6 4M17 11a2.4 2.4 0 1 0 0-4.8M16.2 15c1.8.3 3.2 1.5 3.8 4" /> : null}
       {id === 'work' ? <path d="M4 8h16v11H4V8ZM8 8V6h8v2" /> : null}
       {id === 'contract' ? <path d="M7 4h8l3 3v13H7V4ZM15 4v3h3M9 12h6M9 16h4" /> : null}
+      {id === 'report' ? <path d="M7 3h7l4 4v14H7V3ZM14 3v4h4M9 12h6M9 16h4" /> : null}
+      {id === 'data' ? <path d="M5 7l7-3 7 3-7 3-7-3ZM5 12l7 3 7-3M5 17l7 3 7-3" /> : null}
       {id === 'gear' ? <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM12 3v2.2M12 18.8V21M4.9 6.5l1.6 1.6M17.5 15.9l1.6 1.6M3 12h2.2M18.8 12H21M4.9 17.5l1.6-1.6M17.5 8.1l1.6-1.6" /> : null}
     </svg>
   )
@@ -49,7 +57,9 @@ function Mark({ id }: { id: string }) {
 function situationPath(pathname: string): boolean {
   if (/^\/apps\/[^/]+$/.test(pathname)) return true
   if (pathname.startsWith('/settings')) return true
-  return /\/(inspections|cycles|photos|drawings|meters|schedule|contract)(\/|$)/.test(pathname)
+  if (pathname.startsWith('/reports')) return true
+  if (pathname.startsWith('/assets')) return true
+  return /\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|assets)(\/|$)/.test(pathname)
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
@@ -60,7 +70,6 @@ export function SiteTree({ open, onNavigate }: Props) {
   const currentId = siteId || dutySiteId(app)
   const bareSearch = search.replace(/(^\?|&)view=[^&]*/g, '').replace(/^\?&/, '?').replace(/\?$/, '')
   const wallTo = `/apps/events${bareSearch}`
-  const boardTo = currentId ? `/apps/${app}/sites/${currentId}${bareSearch}` : wallTo
   const record = (path: string) => siteId ? `/sites/${siteId}/${path}${bareSearch}` : `/${path}${bareSearch}`
   const flowSearch = bareSearch ? `${bareSearch}&view=flow` : '?view=flow'
   const flowTo = currentId ? `/apps/events/sites/${currentId}${flowSearch}` : wallTo
@@ -82,7 +91,7 @@ export function SiteTree({ open, onNavigate }: Props) {
         ) : null}
         {currentId ? (
           <NavLink
-            to={boardTo}
+            to={flowTo}
             className={`tree-mode${wall ? '' : ' is-on'}`}
             onClick={onNavigate}
           >
@@ -102,10 +111,27 @@ export function SiteTree({ open, onNavigate }: Props) {
               onClick={onNavigate}
             >
               <Mark id="overview" />
-              전체 현장
+              현황
+            </NavLink>
+            <NavLink
+              to={`/reports${search}`}
+              className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`}
+              onClick={onNavigate}
+            >
+              <Mark id="report" />
+              리포트
+            </NavLink>
+            <NavLink
+              to={record('assets')}
+              className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`}
+              onClick={onNavigate}
+            >
+              <Mark id="data" />
+              데이터자산
             </NavLink>
             <div className="tree-head">설비</div>
             <NavLink to={record('inspections')} className="tree-link" onClick={onNavigate}><Mark id="check" />점검</NavLink>
+            <NavLink to={record('diagnosis')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="diag" />진단</NavLink>
             <NavLink to={record('cycles')} className="tree-link" onClick={onNavigate}><Mark id="cycle" />세척·교체 주기</NavLink>
             <NavLink to={record('photos')} className="tree-link" onClick={onNavigate}><Mark id="photo" />사진·설명</NavLink>
             <NavLink to={record('drawings')} className="tree-link" onClick={onNavigate}><Mark id="draw" />준공 도면</NavLink>
@@ -135,7 +161,22 @@ export function SiteTree({ open, onNavigate }: Props) {
                 className={({ isActive }) => `tree-link${(item.id === 'events' ? pathname === `/apps/events/sites/${currentId}` && view !== 'flow' : isActive) ? ' is-active' : ''}`}
                 onClick={onNavigate}
               >
-                <Mark id={item.id === 'events' ? 'control' : item.id === 'power' ? 'power' : 'meter'} />
+                <Mark id={item.id === 'events' ? 'control' : 'power'} />
+                {item.label}
+              </NavLink>
+            ))}
+            <NavLink to={pendingTo('light')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}>
+              <Mark id="light" />
+              조명
+            </NavLink>
+            {BOARD_REST.map((item) => (
+              <NavLink
+                key={item.id}
+                to={serviceTo(item.id)}
+                className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`}
+                onClick={onNavigate}
+              >
+                <Mark id="meter" />
                 {item.label}
               </NavLink>
             ))}
@@ -148,6 +189,7 @@ export function SiteTree({ open, onNavigate }: Props) {
             <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차</NavLink>
             <NavLink to={serviceTo('parking')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="park" />주차</NavLink>
             <div className="tree-head">근무</div>
+            <NavLink to={record('staff')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="crew" />직원관리</NavLink>
             <NavLink to={record('roster')} className="tree-link" onClick={onNavigate}><Mark id="roster" />근무표</NavLink>
             <NavLink to={record('work')} className="tree-link" onClick={onNavigate}><Mark id="work" />작업 내역</NavLink>
             <div className="tree-head">설정</div>

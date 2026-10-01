@@ -3,7 +3,7 @@ import type { AppId } from '../types/domain.ts'
 import { useScope } from '../lib/useScope.ts'
 
 const SERVICES: { id: AppId; label: string }[] = [
-  { id: 'events', label: '설비자동제어' },
+  { id: 'events', label: '기계설비' },
   { id: 'power', label: '전력' },
   { id: 'metering', label: '원격검침' },
   { id: 'solar', label: '제로에너지' },

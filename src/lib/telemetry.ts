@@ -71,12 +71,24 @@ let queryHydrated = false
 let telemetryCache = new Map<string, Telemetry>()
 let alarmCache: Alarm[] | null = null
 let syncAt = SAMPLE_AT.toISOString()
+const TELEMETRY_EVENT = 't-arch-telemetry'
+
+function emitTelemetry() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(TELEMETRY_EVENT))
+}
+
+export function subscribeTelemetry(onChange: () => void) {
+  window.addEventListener(TELEMETRY_EVENT, onChange)
+  return () => window.removeEventListener(TELEMETRY_EVENT, onChange)
+}
 
 export function hydrateTelemetry(snapshot: Pick<QuerySnapshot, 'telemetry' | 'alarms' | 'syncAt'>) {
   queryHydrated = true
   telemetryCache = new Map(Object.entries(snapshot.telemetry))
   alarmCache = snapshot.alarms
   syncAt = snapshot.syncAt
+  emitTelemetry()
 }
 
 export function applyStreamTick(update: {
@@ -90,6 +102,7 @@ export function applyStreamTick(update: {
       telemetryCache.set(cacheKey, { ...value, current: point.current, receivedAt: point.receivedAt })
     }
   }
+  emitTelemetry()
 }
 
 export function generateTelemetry(ref: PointRef, range: TimeRange): Telemetry {
@@ -453,6 +466,46 @@ export function generateAlarms(): Alarm[] {
 export function apiAlarms(): Alarm[] | null {
   if (!queryHydrated || !alarmCache) return null
   return alarmCache
+}
+
+export function liveAlarms(siteId?: string): Alarm[] {
+  const all = apiAlarms()
+  if (!all) return []
+  return all.filter((alarm) => {
+    if (alarm.severity === 'info') return false
+    if (!isSiteAllowed(alarm.siteId)) return false
+    if (siteId && alarm.siteId !== siteId) return false
+    return true
+  })
+}
+
+export type SiteHealth = {
+  id: string
+  name: string
+  collected: boolean
+  offline: boolean
+  delayed: boolean
+}
+
+export function siteHealth(siteId?: string): SiteHealth[] {
+  const sites = visibleSites().filter((site) => !siteId || site.id === siteId)
+  return sites.map((site) => {
+    const points = listPoints({ siteId: site.id })
+    let collected = false
+    let offline = false
+    let delayed = false
+    for (const row of points) {
+      if (row.point.flags?.offline) offline = true
+      if (row.point.flags?.stale) delayed = true
+      const tel = getTelemetry(row, 'live')
+      if (tel.note === '통신 두절') offline = true
+      if (tel.current != null && (tel.certainty === 'confirmed' || tel.certainty === 'stale')) {
+        collected = true
+        if (tel.certainty === 'stale') delayed = true
+      }
+    }
+    return { id: site.id, name: site.name, collected, offline, delayed }
+  })
 }
 
 export function alarmsForScope(options: { siteId?: string; app?: AppId }): Alarm[] {

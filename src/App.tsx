@@ -21,6 +21,8 @@ import { RoleHomeRedirect } from './pages/RoleHomeRedirect.tsx'
 import { ScreenIndexPage } from './pages/ScreenIndexPage.tsx'
 import { ScreenRedirect } from './pages/ScreenRedirect.tsx'
 import { ContractPage } from './pages/ContractPage.tsx'
+import { AssetsPage } from './pages/AssetsPage.tsx'
+import { DiagnosePage } from './pages/DiagnosePage.tsx'
 import { InspectionsPage, CyclesPage, PhotosPage, DrawingsPage, SchedulePage } from './pages/MaintainPages.tsx'
 import { MetersPage } from './pages/MetersPage.tsx'
 import { CalendarPage, RosterPage } from './pages/DiaryPages.tsx'
@@ -29,6 +31,8 @@ import { PendingDomainPage } from './pages/PendingDomainPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
 import { SystemPage } from './pages/SystemPage.tsx'
+import { ReportPage } from './pages/ReportPage.tsx'
+import { StaffPage } from './pages/StaffPage.tsx'
 import { WorkPage } from './pages/WorkPage.tsx'
 
 export default function App() {
@@ -65,6 +69,10 @@ export default function App() {
               />
               <Route path="/inspections" element={<InspectionsPage />} />
               <Route path="/sites/:siteId/inspections" element={<InspectionsPage />} />
+              <Route path="/assets" element={<AssetsPage />} />
+              <Route path="/sites/:siteId/assets" element={<AssetsPage />} />
+              <Route path="/diagnosis" element={<DiagnosePage />} />
+              <Route path="/sites/:siteId/diagnosis" element={<DiagnosePage />} />
               <Route path="/cycles" element={<CyclesPage />} />
               <Route path="/sites/:siteId/cycles" element={<CyclesPage />} />
               <Route path="/photos" element={<PhotosPage />} />
@@ -77,6 +85,8 @@ export default function App() {
               <Route path="/sites/:siteId/calendar" element={<CalendarPage />} />
               <Route path="/roster" element={<RosterPage />} />
               <Route path="/sites/:siteId/roster" element={<RosterPage />} />
+              <Route path="/staff" element={<StaffPage />} />
+              <Route path="/sites/:siteId/staff" element={<StaffPage />} />
               <Route path="/meters" element={<MetersPage />} />
               <Route path="/sites/:siteId/meters" element={<MetersPage />} />
               <Route path="/domains/:domain" element={<PendingDomainPage />} />
@@ -88,6 +98,7 @@ export default function App() {
               <Route path="/sites/:siteId/contract" element={<ContractPage />} />
               <Route path="/packages" element={<PackagesPage />} />
               <Route path="/packages/:packageId" element={<PackagesPage />} />
+              <Route path="/reports" element={<ReportPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/screens" element={<ScreenIndexPage />} />

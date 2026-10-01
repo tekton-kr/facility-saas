@@ -3,11 +3,11 @@ import type { EquipmentDef, SiteDef, SystemDef } from '../types/domain.ts'
 import { formatDateTime } from '../lib/format.ts'
 import { alarmsForScope, getTelemetry } from '../lib/telemetry.ts'
 
-export type DeskId = 'events' | 'power' | 'metering' | 'ehp' | 'fire' | 'elevator' | 'ev' | 'parking'
+export type DeskId = 'events' | 'power' | 'light' | 'metering' | 'ehp' | 'fire' | 'elevator' | 'ev' | 'parking'
 
 const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string; keys: string[] }[] }> = {
   events: {
-    title: '자동제어',
+    title: '기계설비',
     lead: '운전, 정지, 경보를 설비별로 봅니다.',
     tiles: [
       { label: '운전', keys: ['운전', '기동', 'run'] },
@@ -26,6 +26,16 @@ const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string
       { label: '전류', keys: ['전류'] },
       { label: '유효전력', keys: ['유효전력', '전력'] },
       { label: '역률', keys: ['역률'] },
+    ],
+  },
+  light: {
+    title: '조명',
+    lead: '회로별 점등, 소등, 디밍입니다. 없는 값은 비워 둡니다.',
+    tiles: [
+      { label: '점등', keys: ['점등', 'on', '조명'] },
+      { label: '소등', keys: ['소등', 'off'] },
+      { label: '디밍', keys: ['디밍', '조도', 'dim'] },
+      { label: '고장', keys: ['고장', '경보'] },
     ],
   },
   metering: {
@@ -99,6 +109,9 @@ type PointRow = {
 function systemsFor(site: SiteDef, desk: DeskId): SystemDef[] {
   if (desk === 'events') return site.systems.filter((item) => item.domain === 'hvac' || item.domain === 'events')
   if (desk === 'power') return site.systems.filter((item) => item.domain === 'power')
+  if (desk === 'light') {
+    return site.systems.filter((system) => system.equipment.some((item) => mentions(item, ['조명', '전등', '라이트', 'light'])))
+  }
   if (desk === 'metering') return site.systems.filter((item) => item.domain === 'metering')
   if (desk === 'fire') return site.systems.filter((item) => item.domain === 'fire')
   if (desk === 'ev') return site.systems.filter((item) => item.domain === 'ev')

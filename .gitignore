@@ -232,6 +232,13 @@ credentials.json
 .supabase/
 public/layout-check-sw.js
 
+# Local databases and browser captures
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.har
+
 # Local dumps and traces
 *.trace
 *.heapsnapshot

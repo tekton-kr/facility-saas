@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ManageFrame } from '../components/ManageFrame.tsx'
 import { WorkQueue } from '../components/WorkQueue.tsx'
+import { getSite } from '../lib/catalog.ts'
 import {
   addWorkProof,
   advanceWork,
@@ -13,8 +14,10 @@ import {
   siteLabel,
   workById,
   workInContractPeriod,
+  worksForScope,
 } from '../lib/field.ts'
 import { formatDateTime, WORK_KIND_LABEL, WORK_STATUS_LABEL } from '../lib/format.ts'
+import { staffWorkFor, type StaffJob } from '../lib/maintain.ts'
 import { useCompact } from '../lib/media.ts'
 import { useField } from '../lib/useField.ts'
 import { useScope } from '../lib/useScope.ts'
@@ -24,7 +27,7 @@ const STATUSES = ['received', 'dispatch', 'on-site', 'done'] as const
 
 export function WorkPage() {
   const { workId } = useParams()
-  const { siteId, search } = useScope()
+  const { search } = useScope()
   useField()
   const work = workById(workId)
 
@@ -36,21 +39,96 @@ export function WorkPage() {
     )
   }
 
-  if (!work) {
-    return (
-      <ManageFrame kicker="" title="작업 내역">
-        <p className="manage-note">열린 작업과 끝난 이력을 같이 봅니다.</p>
-        <section className="manage-card">
-          <WorkQueue siteId={siteId} />
-        </section>
-      </ManageFrame>
-    )
-  }
+  if (!work) return <WorkHistory />
 
   return (
     <ManageFrame kicker="작업" title={work.title}>
       <WorkDetail work={work} />
     </ManageFrame>
+  )
+}
+
+function WorkHistory() {
+  const { siteId } = useScope()
+  useField()
+  const [who, setWho] = useState('all')
+  const site = siteId ? getSite(siteId) : undefined
+  const rows = staffWorkFor(siteId)
+  const names = [...new Set(rows.map((item) => item.name))]
+  const shown = who === 'all' ? rows : rows.filter((item) => item.name === who)
+  const groups = names
+    .filter((name) => shown.some((item) => item.name === name))
+    .map((name) => ({
+      name,
+      shift: rows.find((item) => item.name === name)?.shift ?? '주간',
+      jobs: shown
+        .filter((item) => item.name === name)
+        .sort((a, b) => b.doneAt.localeCompare(a.doneAt)),
+    }))
+  const openWorks = worksForScope(siteId)
+
+  if (siteId && !site) {
+    return (
+      <ManageFrame kicker="작업" title="현장을 찾지 못했습니다">
+        <div className="empty">배정 목록에 없는 건물입니다.</div>
+      </ManageFrame>
+    )
+  }
+
+  return (
+    <ManageFrame kicker="" title="작업 내역">
+      <p className="manage-note">
+        {site ? `${site.name}에서 ` : ''}직원이 한 일입니다. 예시 표시는 아직 서버에 남은 작업 기록이 아닙니다.
+      </p>
+      {names.length > 0 ? (
+        <div className="chip-row" role="group" aria-label="직원">
+          <button type="button" className={who === 'all' ? 'is-active' : ''} onClick={() => setWho('all')}>
+            전체 {rows.length}
+          </button>
+          {names.map((name) => (
+            <button key={name} type="button" className={who === name ? 'is-active' : ''} onClick={() => setWho(name)}>
+              {name} {rows.filter((item) => item.name === name).length}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {groups.length === 0 ? <div className="empty">이 범위에 작업 이력이 없습니다.</div> : (
+        <div className="work-log">
+          {groups.map((group) => (
+            <section key={group.name} className="manage-card">
+              <div className="work-person">
+                <h2>{group.name}</h2>
+                <em>{group.shift} · {group.jobs.length}건</em>
+              </div>
+              <div className="manage-list">
+                {group.jobs.map((job) => (
+                  <StaffRow key={job.id} job={job} showSite={!siteId} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+      {openWorks.length > 0 ? (
+        <section className="manage-card">
+          <h2>접수된 작업</h2>
+          <WorkQueue siteId={siteId} />
+        </section>
+      ) : null}
+    </ManageFrame>
+  )
+}
+
+function StaffRow({ job, showSite }: { job: StaffJob; showSite: boolean }) {
+  const place = showSite ? getSite(job.siteId)?.name : ''
+  return (
+    <div className="manage-row">
+      <span>
+        <strong>{job.title}<span className="sample-tag">예시</span></strong>
+        <em>{place ? `${place} · ` : ''}{job.equipment} · {job.result}</em>
+      </span>
+      <b>{formatDateTime(job.doneAt)}</b>
+    </div>
   )
 }
 

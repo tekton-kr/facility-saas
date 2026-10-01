@@ -9,16 +9,22 @@ export function BottomNav() {
   const owner = role === 'exec' || command
   const duty = siteId ?? dutySiteId('events')
   const siteApp = (app: string) => duty ? `/apps/${app}/sites/${duty}${search}` : `/apps/${app}${search}`
+  const flowSearch = (() => {
+    const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+    params.set('view', 'flow')
+    const query = params.toString()
+    return query ? `?${query}` : ''
+  })()
   const items = owner
     ? [
         { id: 'wall', label: '대시보드', to: `/apps/events${search}` },
-        { id: 'board', label: '현장', to: duty ? `/apps/events/sites/${duty}${search}` : `/apps/events${search}` },
+        { id: 'board', label: '현장', to: duty ? `/apps/events/sites/${duty}${flowSearch}` : `/apps/events${search}` },
         { id: 'inspect', label: '점검', to: duty ? `/sites/${duty}/inspections${search}` : `/inspections${search}` },
         { id: 'schedule', label: '방문', to: duty ? `/sites/${duty}/schedule${search}` : `/schedule${search}` },
         { id: 'contract', label: '유지보수', to: duty ? `/sites/${duty}/contract${search}` : `/contract${search}` },
       ]
     : [
-        { id: 'events', label: '자동제어', to: siteApp('events') },
+        { id: 'events', label: '기계설비', to: siteApp('events') },
         { id: 'power', label: '전력', to: siteApp('power') },
         { id: 'metering', label: '검침', to: siteApp('metering') },
         { id: 'ev', label: '전기차', to: siteApp('ev') },

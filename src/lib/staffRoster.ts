@@ -1,8 +1,12 @@
 import { getTenant } from './tenant.ts'
 
+export const STAFF_RANKS = ['관리소장', '시설팀장', '시설직원', '방재실'] as const
+export type StaffRank = (typeof STAFF_RANKS)[number]
+
 export type StaffRecord = {
   phone: string
   name: string
+  rank: StaffRank
   tenantId: string
   siteIds: string[]
 }
@@ -20,19 +24,29 @@ export type DeskRecord = {
 }
 
 const KEY = 't-arch-staff-roster'
+const EVENT = 't-arch-staff'
 
 const SEED: StaffRecord[] = [
   {
     phone: '01012345678',
     name: '김현장',
+    rank: '시설직원',
     tenantId: 'tekton',
     siteIds: ['hanam-hq'],
   },
   {
     phone: '01022223333',
     name: '이소장',
+    rank: '관리소장',
     tenantId: 'tekton',
     siteIds: ['hanam-hq', 'suwon-off'],
+  },
+  {
+    phone: '01033334444',
+    name: '최시설',
+    rank: '방재실',
+    tenantId: 'tekton',
+    siteIds: ['hanam-hq'],
   },
 ]
 
@@ -70,27 +84,47 @@ export function phoneTail(phone: string): string {
   return digits.slice(-4)
 }
 
+function isRank(value: unknown): value is StaffRank {
+  return STAFF_RANKS.some((rank) => rank === value)
+}
+
+function rankOf(phone: string, value: unknown): StaffRank {
+  if (isRank(value)) return value
+  return SEED.find((row) => row.phone === phone)?.rank ?? '시설직원'
+}
+
+function copyStaff(rows: StaffRecord[]): StaffRecord[] {
+  return rows.map((row) => ({ ...row, siteIds: [...row.siteIds] }))
+}
+
 function loadStaff(): StaffRecord[] {
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return SEED.map((row) => ({ ...row, siteIds: [...row.siteIds] }))
+    if (!raw) return copyStaff(SEED)
     const parsed = JSON.parse(raw) as StaffRecord[]
-    if (!Array.isArray(parsed)) return SEED.map((row) => ({ ...row, siteIds: [...row.siteIds] }))
+    if (!Array.isArray(parsed)) return copyStaff(SEED)
     return parsed
       .filter((row) => row && typeof row.phone === 'string' && typeof row.name === 'string')
       .map((row) => ({
         phone: normalizePhone(row.phone),
         name: row.name,
+        rank: rankOf(normalizePhone(row.phone), row.rank),
         tenantId: row.tenantId,
         siteIds: [...(row.siteIds ?? [])],
       }))
   } catch {
-    return SEED.map((row) => ({ ...row, siteIds: [...row.siteIds] }))
+    return copyStaff(SEED)
   }
 }
 
 function saveStaff(rows: StaffRecord[]) {
   localStorage.setItem(KEY, JSON.stringify(rows))
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENT))
+}
+
+export function subscribeStaff(onChange: () => void) {
+  window.addEventListener(EVENT, onChange)
+  return () => window.removeEventListener(EVENT, onChange)
 }
 
 function scopedRecord<T extends { tenantId: string; siteIds: string[] }>(row: T): T | null {
@@ -116,7 +150,19 @@ export function lookupStaff(phone: string): StaffRecord | null {
   return scopedRecord(row)
 }
 
-export function upsertStaff(input: { phone: string; name: string; tenantId: string; siteIds: string[] }): StaffRecord {
+function assertManagerRemains(rows: StaffRecord[], tenantId: string) {
+  const managers = rows.filter((item) => item.tenantId === tenantId && item.rank === '관리소장' && item.siteIds.length > 0)
+  if (managers.length === 0) throw new Error('관리소장은 한 명은 있어야 합니다.')
+}
+
+export function upsertStaff(input: {
+  phone: string
+  name: string
+  tenantId: string
+  siteIds: string[]
+  rank: StaffRank
+  previousPhone?: string
+}): StaffRecord {
   const tenant = getTenant(input.tenantId)
   if (!tenant) throw new Error('없는 고객사입니다.')
   const phone = normalizePhone(input.phone)
@@ -125,21 +171,40 @@ export function upsertStaff(input: { phone: string; name: string; tenantId: stri
   }
   const name = input.name.trim()
   if (!name) throw new Error('이름을 넣으십시오.')
+  if (!isRank(input.rank)) throw new Error('직급을 고르십시오.')
   const siteIds = input.siteIds.filter((id) => tenant.siteIds.includes(id))
   if (siteIds.length === 0) throw new Error('현장을 고르십시오.')
-  const row: StaffRecord = { phone, name, tenantId: tenant.id, siteIds }
-  const next = loadStaff().filter((item) => item.phone !== phone)
-  saveStaff([...next, row])
+  const previous = input.previousPhone ? normalizePhone(input.previousPhone) : phone
+  const row: StaffRecord = { phone, name, rank: input.rank, tenantId: tenant.id, siteIds }
+  const next = loadStaff().filter((item) => item.phone !== phone && item.phone !== previous)
+  const saved = [...next, row]
+  assertManagerRemains(saved, tenant.id)
+  saveStaff(saved)
+  if (previous !== phone) pendingOtp.delete(previous)
   return row
 }
 
 export function removeStaff(phone: string): boolean {
   const digits = normalizePhone(phone)
   const rows = loadStaff()
-  if (!rows.some((item) => item.phone === digits)) return false
-  saveStaff(rows.filter((item) => item.phone !== digits))
+  const current = rows.find((item) => item.phone === digits)
+  if (!current) return false
+  const next = rows.filter((item) => item.phone !== digits)
+  assertManagerRemains(next, current.tenantId)
+  saveStaff(next)
   pendingOtp.delete(digits)
   return true
+}
+
+export function unassignStaff(phone: string, siteId: string): void {
+  const row = lookupStaff(phone)
+  if (!row) return
+  const siteIds = row.siteIds.filter((id) => id !== siteId)
+  if (siteIds.length === 0) {
+    removeStaff(phone)
+    return
+  }
+  upsertStaff({ ...row, siteIds, previousPhone: row.phone })
 }
 
 export function issueStaffOtp(phone: string): string {

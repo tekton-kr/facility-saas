@@ -6,7 +6,7 @@ import { SiteServices } from './SiteServices.tsx'
 
 const COPY: Record<'events' | 'power' | 'metering' | 'solar', { title: string; note: string; metrics: string[] }> = {
   events: {
-    title: '설비자동제어',
+    title: '기계설비',
     note: '운전과 실내 환경을 먼저 봅니다. 값이 들어오면 이 칸이 채워집니다.',
     metrics: ['실내온도', '실내습도', '급기온도', '운전', '설정온도', '외기온도'],
   },
@@ -56,12 +56,12 @@ export function SiteDashboard({ site, service }: { site: SiteDef; service: AppId
         <article>
           <span>설비</span>
           <strong>{site.systems.length}</strong>
-          <em>{site.systems.length > 0 ? '구성됨' : '자동제어 연동 대기'}</em>
+          <em>{site.systems.length > 0 ? '구성됨' : '기계설비 연동 대기'}</em>
         </article>
         <article>
           <span>서비스</span>
           <strong>{copy.title}</strong>
-          <em>설비자동제어가 기본입니다</em>
+          <em>기계설비가 기본입니다</em>
         </article>
       </section>
       <SiteServices siteId={site.id} systems={site.systems} search={search} current={focus} />

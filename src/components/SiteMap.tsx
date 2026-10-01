@@ -23,7 +23,6 @@ function buildSiteMarker(
   position: KakaoLatLng,
   map: { setCenter: (position: KakaoLatLng) => void },
   cards: HTMLElement[],
-  closeCards: () => void,
   navigate: (href: string) => void,
 ) {
   const root = document.createElement('div')
@@ -31,7 +30,6 @@ function buildSiteMarker(
 
   const card = document.createElement('div')
   card.className = 'site-pin-card'
-  card.hidden = true
   const title = document.createElement('strong')
   title.textContent = pin.name
   const state = document.createElement('span')
@@ -59,10 +57,11 @@ function buildSiteMarker(
   mark.innerHTML = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 28V14l8-7 8 7v14H8z"/><path d="M13 28v-7h6v7"/><rect x="11" y="16" width="3.2" height="3.2"/><rect x="17.8" y="16" width="3.2" height="3.2" class="is-lit"/></svg>'
   mark.addEventListener('click', (event) => {
     event.stopPropagation()
-    const willOpen = card.hidden
-    closeCards()
-    card.hidden = !willOpen
-    if (willOpen) map.setCenter(position)
+    cards.forEach((item) => {
+      item.style.zIndex = '3'
+    })
+    card.style.zIndex = '8'
+    map.setCenter(position)
   })
 
   root.append(card, mark)
@@ -101,18 +100,13 @@ export function SiteMap({ sites }: Props) {
         const current = pins.current
         const placed: Array<{ pin: MapPin; lat: number; lng: number }> = []
         const cards: HTMLElement[] = []
-        const closeCards = () => {
-          cards.forEach((card) => {
-            card.hidden = true
-          })
-        }
         for (const pin of current) {
           const point = await locatePin(maps, pin)
           if (cancelled) return
           if (!point) continue
           placed.push({ pin, ...point })
           const position = new maps.LatLng(point.lat, point.lng)
-          const marker = buildSiteMarker(pin, position, map, cards, closeCards, navigate)
+          const marker = buildSiteMarker(pin, position, map, cards, navigate)
           const overlay = new maps.CustomOverlay({ position, content: marker, yAnchor: 1, xAnchor: 0.5 })
           overlay.setMap(map)
           overlays.push(overlay)

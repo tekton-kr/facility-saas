@@ -11,9 +11,10 @@
   force = true
 
 [[headers]]
-  for = "/desk"
+  for = "/*"
   [headers.values]
-    X-Robots-Tag = "noindex, nofollow, noarchive"
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet"
+    Referrer-Policy = "no-referrer"
 
 [[redirects]]
   from = "/*"

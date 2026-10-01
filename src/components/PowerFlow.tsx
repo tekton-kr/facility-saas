@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import type { SiteDef } from '../types/domain.ts'
 import { listPoints } from '../lib/catalog.ts'
+import { formatDateTime } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
+import { useScope } from '../lib/useScope.ts'
 
 type Kind = 'v' | 'a' | 'kw'
 
@@ -19,11 +22,15 @@ function formatValue(value: number): string {
   return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 }).format(value)
 }
 
+function matchedPoints(siteId: string, keys: string[]) {
+  return listPoints({ siteId }).filter((item) => {
+    const hay = `${item.system.name} ${item.equipment.name} ${item.point.name} ${item.point.tags.join(' ')}`.toLowerCase()
+    return keys.some((key) => hay.includes(key.toLowerCase()))
+  })
+}
 function reading(siteId: string, keys: string[], kind: Kind): string {
-  const rows = listPoints({ siteId })
-  const row = rows.find((item) => {
-    const hay = `${item.system.name} ${item.equipment.name} ${item.point.name} ${item.point.tags.join(' ')} ${item.point.unit}`.toLowerCase()
-    if (!keys.some((key) => hay.includes(key))) return false
+  const row = matchedPoints(siteId, keys).find((item) => {
+    const hay = `${item.point.name} ${item.point.tags.join(' ')} ${item.point.unit}`.toLowerCase()
     if (kind === 'v') return item.point.unit === 'V' || hay.includes('전압')
     if (kind === 'a') return item.point.unit === 'A' || hay.includes('전류')
     return item.point.unit.toLowerCase() === 'kw' || hay.includes('전력') || hay.includes('kw')
@@ -101,14 +108,22 @@ function Node({ siteId, id, label, keys }: { siteId: string; id: string; label: 
     <article className="flow-node">
       <NodeIcon id={id} />
       <Reads siteId={siteId} keys={keys} />
+      <em>{matchedPoints(siteId, keys).length}개 관제점</em>
       <strong>{label}</strong>
     </article>
   )
 }
 
 export function PowerFlow({ site }: { site: SiteDef }) {
+  const { search } = useScope()
   const top = NODES.filter((item) => item.row === 'top')
   const bottom = NODES.filter((item) => item.row === 'bottom')
+  const points = listPoints({ siteId: site.id })
+  const live = points.filter((row) => {
+    const tel = getTelemetry(row, 'live')
+    return tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
+  })
+
   return (
     <div className="cmd flow">
       <header className="cmd-head">
@@ -116,7 +131,7 @@ export function PowerFlow({ site }: { site: SiteDef }) {
           <p>{site.name}</p>
           <h1>종합관제</h1>
         </div>
-        <p>{site.location || '이 건물'} · 수신된 전압, 전류, 전력만 숫자로 둡니다.</p>
+        <p>{site.location || '이 건물'} · 관제점 {points.length} · 수신 {live.length} · 수신 없음 {points.length - live.length}</p>
       </header>
       <section className="flow-board" aria-label="전력 흐름">
         <div className="flow-row is-top">
@@ -128,6 +143,30 @@ export function PowerFlow({ site }: { site: SiteDef }) {
         <div className="flow-row is-bottom">
           {bottom.map((item) => <Node key={item.id} siteId={site.id} {...item} />)}
         </div>
+      </section>
+      <section className="cmd-panel flow-points" aria-label="관제점">
+        <h2>관제점</h2>
+        {points.length === 0 ? <div className="empty">이 건물에 등록된 관제점이 없습니다.</div> : (
+          <ul>
+            {points.map((row) => {
+              const tel = getTelemetry(row, 'live')
+              const hasValue = tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
+              const href = `/apps/events/sites/${site.id}/systems/${row.system.id}/equipment/${row.equipment.id}/points/${row.point.id}${search}`
+              return (
+                <li key={`${row.system.id}-${row.equipment.id}-${row.point.id}`}>
+                  <div>
+                    <strong>{row.point.name}</strong>
+                    <em>{row.equipment.name} · {row.system.name}</em>
+                  </div>
+                  <Link to={href}>
+                    {hasValue ? `${formatValue(tel.current as number)} ${row.point.unit}` : '수신 없음'}
+                    <span>{hasValue ? formatDateTime(tel.receivedAt) : '값 없음'}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>
     </div>
   )
