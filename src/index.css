@@ -1151,6 +1151,10 @@ a:focus-visible {
   min-height: 0;
 }
 
+.tree-nav.is-staff {
+  padding-top: 12px;
+}
+
 .tree-foot {
   border-top: 1px solid var(--border);
 }
@@ -5170,20 +5174,26 @@ button.drawer-open {
 }
 
 .flow-row.is-top {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .flow-row.is-bottom {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.flow-node {
+a.flow-node {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   min-width: 0;
+  color: inherit;
   text-align: center;
+  text-decoration: none;
+}
+
+a.flow-node:hover strong {
+  color: var(--tone-accent, var(--focus));
 }
 
 .flow-node svg {
@@ -7071,48 +7081,10 @@ button.manage-row {
   color: var(--tone-muted, var(--text-secondary));
 }
 
-.plant-switch {
-  display: inline-flex;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.plant-switch button {
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--tone-line, var(--border));
-  border-radius: 999px;
-  background: transparent;
-  color: var(--tone-muted, var(--text-secondary));
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.plant-switch button.is-on {
-  border-color: var(--tone-accent, var(--text));
-  background: var(--tone-chip, var(--surface));
-  color: var(--tone-text, var(--text));
-}
-
-.plant-flow {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.plant-line,
 .plant-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
-}
-
-.plant-pipe {
-  height: 4px;
-  margin: 14px 12%;
-  border-radius: 999px;
-  background: var(--tone-accent, #2563eb);
 }
 
 .plant-node {
@@ -7169,9 +7141,9 @@ button.manage-row {
 .sld {
   overflow-x: auto;
   padding: 0;
-  border: 1px solid #141414;
-  border-radius: 8px;
-  background: #000;
+  border: 1px solid var(--tone-line, var(--border));
+  border-radius: 12px;
+  background: var(--tone-field, var(--surface));
 }
 
 .sld svg {
@@ -7179,7 +7151,7 @@ button.manage-row {
   width: 100%;
   min-width: 920px;
   height: auto;
-  background: #000;
+  background: var(--tone-field, var(--surface));
 }
 
 .sld text {
@@ -7190,7 +7162,7 @@ button.manage-row {
 .sld-bus,
 .sld-frame {
   fill: none;
-  stroke: #ff2a22;
+  stroke: #d12b2b;
   stroke-linecap: square;
   stroke-linejoin: miter;
 }
@@ -7200,18 +7172,21 @@ button.manage-row {
 .sld-bus { stroke-width: 2.4; }
 
 .sld-break {
-  fill: #000;
-  stroke: #ff2a22;
+  fill: var(--tone-field, var(--surface));
+  stroke: #d12b2b;
   stroke-width: 1.6;
 }
 
-.sld-arrow { fill: #3dff6e; }
-.sld-node { fill: #ff2a22; }
+.sld-arrow { fill: #1a9a4a; }
+.sld-node { fill: #d12b2b; }
 
-.sld-title { fill: #fff; font-weight: 720; }
-.sld-name { fill: #f3f6fb; font-weight: 680; }
-.sld-live { fill: #3dff6e; font-weight: 620; }
-.sld-note { fill: #8b95a3; font-weight: 600; }
+.sld-title,
+.sld-name { fill: var(--tone-text, var(--text)); font-weight: 700; }
+.sld-live { fill: #0f7a3a; font-weight: 650; }
+.sld-note { fill: var(--tone-muted, var(--text-secondary)); font-weight: 600; }
+
+.shell:not(.is-light) .sld-live { fill: #7dffa8; }
+.shell:not(.is-light) .sld-arrow { fill: #3dff6e; }
 
 .power-grid {
   display: flex;

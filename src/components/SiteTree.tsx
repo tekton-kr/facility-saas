@@ -78,8 +78,8 @@ export function SiteTree({ open, onNavigate }: Props) {
 
   return (
     <aside className={`tree${open ? ' is-open' : ''}`}>
-      <div className="tree-modes" role="group" aria-label="화면">
-        {owner ? (
+      {owner ? (
+        <div className="tree-modes" role="group" aria-label="화면">
           <NavLink
             to={wallTo}
             end
@@ -88,20 +88,20 @@ export function SiteTree({ open, onNavigate }: Props) {
           >
             대시보드
           </NavLink>
-        ) : null}
-        {currentId ? (
-          <NavLink
-            to={flowTo}
-            className={`tree-mode${wall ? '' : ' is-on'}`}
-            onClick={onNavigate}
-          >
-            현장
-          </NavLink>
-        ) : (
-          <span className="tree-mode is-disabled">현장</span>
-        )}
-      </div>
-      <nav className="tree-nav" aria-label="메뉴">
+          {currentId ? (
+            <NavLink
+              to={flowTo}
+              className={`tree-mode${wall ? '' : ' is-on'}`}
+              onClick={onNavigate}
+            >
+              현장
+            </NavLink>
+          ) : (
+            <span className="tree-mode is-disabled">현장</span>
+          )}
+        </div>
+      ) : null}
+      <nav className={`tree-nav${owner ? '' : ' is-staff'}`} aria-label="메뉴">
         {wall ? (
           <>
             <NavLink
@@ -186,8 +186,8 @@ export function SiteTree({ open, onNavigate }: Props) {
                 {item.label}
               </NavLink>
             ))}
-            <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차충전</NavLink>
-            <NavLink to={serviceTo('parking')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="park" />주차</NavLink>
+            <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차충전기</NavLink>
+            <NavLink to={serviceTo('parking')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="park" />주차운영</NavLink>
             <div className="tree-head">근무</div>
             <NavLink to={record('staff')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="crew" />직원관리</NavLink>
             <NavLink to={record('roster')} className="tree-link" onClick={onNavigate}><Mark id="roster" />근무표</NavLink>

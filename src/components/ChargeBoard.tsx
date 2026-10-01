@@ -141,7 +141,7 @@ export function ChargeBoard({ site }: { site?: SiteDef }) {
       <header className="cmd-head">
         <div>
           <p>{site?.name ?? '현장'}</p>
-          <h1>전기차충전</h1>
+          <h1>전기차충전기</h1>
         </div>
         <p>
           {site?.location || '이 건물'} · 교류 {ac} · 직류 {dc}

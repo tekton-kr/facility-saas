@@ -87,7 +87,7 @@ const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string
     ],
   },
   ev: {
-    title: '전기차충전',
+    title: '전기차충전기',
     lead: '충전기별 상태와 충전 전력입니다.',
     tiles: [
       { label: '충전', keys: ['충전'] },
@@ -97,7 +97,7 @@ const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string
     ],
   },
   parking: {
-    title: '주차',
+    title: '주차운영',
     lead: '면수와 입출차입니다.',
     tiles: [
       { label: '주차', keys: ['주차', '재차'] },

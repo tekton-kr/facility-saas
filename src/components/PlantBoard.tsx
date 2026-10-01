@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { EquipmentDef, SiteDef, SystemDef } from '../types/domain.ts'
 import { alarmsForScope, getTelemetry } from '../lib/telemetry.ts'
 
@@ -94,10 +93,9 @@ function unitsOf(site: SiteDef): Unit[] {
 }
 
 export function PlantBoard({ site }: { site?: SiteDef }) {
-  const [view, setView] = useState<'flow' | 'card'>('flow')
-  const flowUnits = site ? unitsOf(site) : SAMPLE_FLOW
-  const sample = flowUnits.every((item) => item.sample)
-  const cards = sample ? SAMPLE_CARDS : flowUnits
+  const roles = site ? unitsOf(site) : SAMPLE_FLOW
+  const sample = roles.every((item) => item.sample)
+  const cards = sample ? SAMPLE_CARDS : roles
 
   return (
     <div className="cmd desk">
@@ -111,25 +109,9 @@ export function PlantBoard({ site }: { site?: SiteDef }) {
           {sample ? ' · 아래 숫자와 상태는 예시입니다.' : ' · 받은 운전과 온도만 숫자로 둡니다.'}
         </p>
       </header>
-      <div className="plant-switch" role="group" aria-label="기계설비 보기">
-        <button type="button" className={view === 'flow' ? 'is-on' : ''} onClick={() => setView('flow')}>계통도</button>
-        <button type="button" className={view === 'card' ? 'is-on' : ''} onClick={() => setView('card')}>카드</button>
+      <div className="plant-cards">
+        {cards.map((item) => <PlantNode key={item.id} unit={item} />)}
       </div>
-      {view === 'flow' ? (
-        <section className="plant-flow" aria-label="기계설비 계통도">
-          <div className="plant-line">
-            {flowUnits.slice(0, 2).map((item) => <PlantNode key={item.id} unit={item} />)}
-          </div>
-          <div className="plant-pipe" aria-hidden="true" />
-          <div className="plant-line">
-            {flowUnits.slice(2).map((item) => <PlantNode key={item.id} unit={item} />)}
-          </div>
-        </section>
-      ) : (
-        <div className="plant-cards">
-          {cards.map((item) => <PlantNode key={item.id} unit={item} />)}
-        </div>
-      )}
     </div>
   )
 }

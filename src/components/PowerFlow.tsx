@@ -6,16 +6,16 @@ import { formatDateTime } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 
-type Kind = 'v' | 'a' | 'kw'
-
-const NODES: { id: string; label: string; keys: string[]; row: 'top' | 'bottom' }[] = [
-  { id: 'grid', label: '수전', keys: ['수전', '인입', '한전', 'grid'], row: 'top' },
-  { id: 'pv', label: '태양광', keys: ['태양광', '인버터', 'pv', 'solar'], row: 'top' },
-  { id: 'wind', label: '풍력', keys: ['풍력', 'wind'], row: 'top' },
-  { id: 'gen', label: '비상발전', keys: ['비상', '디젤', '발전기', 'diesel'], row: 'bottom' },
-  { id: 'bat', label: '배터리', keys: ['배터리', '축전', 'ess'], row: 'bottom' },
-  { id: 'ev', label: '충전기', keys: ['충전', 'charger', 'ev'], row: 'bottom' },
-  { id: 'load', label: '부하', keys: ['부하', 'load'], row: 'bottom' },
+const SERVICES: { id: string; label: string; keys: string[]; row: 'top' | 'bottom'; path: string }[] = [
+  { id: 'events', label: '기계설비', keys: ['공조', '냉동', '펌프', '보일러', '열교환'], row: 'top', path: 'apps/events' },
+  { id: 'power', label: '전력', keys: ['수전', '전력', '전압', '전류'], row: 'top', path: 'apps/power' },
+  { id: 'light', label: '조명', keys: ['조명'], row: 'top', path: 'domains/light' },
+  { id: 'metering', label: '원격검침', keys: ['검침', '가스', '급탕', '난방', '급수'], row: 'top', path: 'apps/metering' },
+  { id: 'ehp', label: 'EHP', keys: ['ehp', '실내'], row: 'top', path: 'domains/ehp' },
+  { id: 'fire', label: '소방', keys: ['소방', '화재'], row: 'bottom', path: 'domains/fire' },
+  { id: 'elevator', label: '엘리베이터', keys: ['엘리베이터', '승강'], row: 'bottom', path: 'domains/elevator' },
+  { id: 'ev', label: '전기차충전기', keys: ['충전', 'ev'], row: 'bottom', path: 'apps/ev' },
+  { id: 'parking', label: '주차운영', keys: ['주차'], row: 'bottom', path: 'apps/parking' },
 ]
 
 function formatValue(value: number): string {
@@ -28,96 +28,60 @@ function matchedPoints(siteId: string, keys: string[]) {
     return keys.some((key) => hay.includes(key.toLowerCase()))
   })
 }
-function reading(siteId: string, keys: string[], kind: Kind): string {
-  const row = matchedPoints(siteId, keys).find((item) => {
-    const hay = `${item.point.name} ${item.point.tags.join(' ')} ${item.point.unit}`.toLowerCase()
-    if (kind === 'v') return item.point.unit === 'V' || hay.includes('전압')
-    if (kind === 'a') return item.point.unit === 'A' || hay.includes('전류')
-    return item.point.unit.toLowerCase() === 'kw' || hay.includes('전력') || hay.includes('kw')
-  })
-  if (!row) return '수신 없음'
-  const tel = getTelemetry(row, 'live')
-  if (tel.current == null || tel.certainty === 'unknown' || tel.certainty === 'estimate') return '수신 없음'
-  return formatValue(tel.current)
+function deskSearch(search: string): string {
+  return search.replace(/(^\?|&)view=[^&]*/g, '').replace(/^\?&/, '?').replace(/\?$/, '')
+}
+
+function serviceHref(siteId: string, path: string, search: string): string {
+  const query = deskSearch(search)
+  if (path.startsWith('domains/')) return `/sites/${siteId}/${path}${query}`
+  return `/${path}/sites/${siteId}${query}`
 }
 
 function NodeIcon({ id }: { id: string }) {
   return (
     <svg viewBox="0 0 64 48" aria-hidden="true">
-      {id === 'grid' ? (
-        <>
-          <path d="M18 40V14M32 40V8M46 40V14M14 14h8M28 8h8M42 14h8M18 22h14M32 22h14" />
-        </>
-      ) : null}
-      {id === 'pv' ? (
-        <>
-          <path d="M8 30h48l-6 10H14L8 30Z" />
-          <path d="M20 30v10M32 30v10M44 30v10M8 30l24-8 24 8" />
-        </>
-      ) : null}
-      {id === 'wind' ? (
-        <>
-          <path d="M32 40V18" />
-          <circle cx="32" cy="16" r="2" />
-          <path d="M32 16 32 4M32 16 44 22M32 16 20 22" />
-        </>
-      ) : null}
-      {id === 'gen' ? (
-        <>
-          <path d="M10 18h28v18H10V18Z" />
-          <path d="M38 24h10M44 20v8M16 18V12h12v6" />
-        </>
-      ) : null}
-      {id === 'bat' ? (
-        <>
-          <path d="M16 12h24v26H16V12Z" />
-          <path d="M24 8h16v4H24V8ZM22 22h12M32 18v12" />
-        </>
-      ) : null}
-      {id === 'ev' ? (
-        <>
-          <path d="M14 28h28l-3-10H20L14 28Z" />
-          <path d="M20 28v6M36 28v6M40 16h8v8" />
-        </>
-      ) : null}
-      {id === 'load' ? (
-        <>
-          <path d="M12 40V20l20-10 20 10v20H12Z" />
-          <path d="M28 40V28h8v12" />
-        </>
-      ) : null}
+      {id === 'events' ? <path d="M8 16h48M8 32h48M20 16v16M44 16v16" /> : null}
+      {id === 'power' ? <path d="M34 6 18 26h12l-2 16 18-24H34l2-12Z" /> : null}
+      {id === 'light' ? <path d="M32 8a12 12 0 0 1 5 22.4V36H27v-5.6A12 12 0 0 1 32 8ZM28 40h8M30 44h4" /> : null}
+      {id === 'metering' ? <path d="M10 40h44M16 40V20M32 40V12M48 40V26" /> : null}
+      {id === 'ehp' ? <path d="M32 8v6M32 34v6M14 16l5 3M45 29l5 3M14 32l5-3M45 19l5-3M32 18a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" /> : null}
+      {id === 'fire' ? <path d="M32 6s12 10 12 18a12 12 0 0 1-24 0c0-4 4-6 4-10 4 2 8 4 8 8 0-6 0-12 0-16Z" /> : null}
+      {id === 'elevator' ? <path d="M18 42V8h28v34M18 22h28M32 14l-4 5h8l-4-5ZM32 34l4-5h-8l4 5Z" /> : null}
+      {id === 'ev' ? <path d="M10 30h32l-2-10H16L10 30Zm4 0v4m18-4v4M32 14h8l2 6" /> : null}
+      {id === 'parking' ? <path d="M18 42V8h16a10 10 0 0 1 0 20H18" /> : null}
     </svg>
   )
 }
 
-function Reads({ siteId, keys }: { siteId: string; keys: string[] }) {
-  const volts = reading(siteId, keys, 'v')
-  const amps = reading(siteId, keys, 'a')
-  const power = reading(siteId, keys, 'kw')
-  return (
-    <p>
-      <b className={volts === '수신 없음' ? 'is-empty' : ''}>{volts === '수신 없음' ? 'V 수신 없음' : `${volts} V`}</b>
-      <b className={amps === '수신 없음' ? 'is-empty' : ''}>{amps === '수신 없음' ? 'A 수신 없음' : `${amps} A`}</b>
-      <b className={power === '수신 없음' ? 'is-empty' : ''}>{power === '수신 없음' ? 'kW 수신 없음' : `${power} kW`}</b>
-    </p>
-  )
+function liveText(siteId: string, keys: string[]): string {
+  const row = matchedPoints(siteId, keys).find((item) => {
+    const tel = getTelemetry(item, 'live')
+    return tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
+  })
+  if (!row) return '수신 없음'
+  const tel = getTelemetry(row, 'live')
+  return `${formatValue(tel.current as number)}${row.point.unit ? ` ${row.point.unit}` : ''}`
 }
 
-function Node({ siteId, id, label, keys }: { siteId: string; id: string; label: string; keys: string[] }): ReactNode {
+function Node({ siteId, id, label, keys, href }: { siteId: string; id: string; label: string; keys: string[]; href: string }): ReactNode {
+  const value = liveText(siteId, keys)
   return (
-    <article className="flow-node">
+    <Link className="flow-node" to={href}>
       <NodeIcon id={id} />
-      <Reads siteId={siteId} keys={keys} />
+      <p>
+        <b className={value === '수신 없음' ? 'is-empty' : ''}>{value}</b>
+      </p>
       <em>{matchedPoints(siteId, keys).length}개 관제점</em>
       <strong>{label}</strong>
-    </article>
+    </Link>
   )
 }
 
 export function PowerFlow({ site }: { site: SiteDef }) {
   const { search } = useScope()
-  const top = NODES.filter((item) => item.row === 'top')
-  const bottom = NODES.filter((item) => item.row === 'bottom')
+  const top = SERVICES.filter((item) => item.row === 'top')
+  const bottom = SERVICES.filter((item) => item.row === 'bottom')
   const points = listPoints({ siteId: site.id })
   const live = points.filter((row) => {
     const tel = getTelemetry(row, 'live')
@@ -152,15 +116,19 @@ export function PowerFlow({ site }: { site: SiteDef }) {
           <div><dt>상태</dt><dd>{live.length > 0 ? '수신 중' : '수신 대기'}</dd></div>
         </dl>
       </section>
-      <section className="flow-board" aria-label="전력 흐름">
+      <section className="flow-board" aria-label="시설 관제">
         <div className="flow-row is-top">
-          {top.map((item) => <Node key={item.id} siteId={site.id} {...item} />)}
+          {top.map((item) => (
+            <Node key={item.id} siteId={site.id} id={item.id} label={item.label} keys={item.keys} href={serviceHref(site.id, item.path, search)} />
+          ))}
         </div>
         <svg className="flow-wires" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M166 0v28M500 0v28M834 0v28M166 28h668M125 62v28M375 62v28M625 62v28M875 62v28M125 62h750" />
+          <path d="M100 0v28M300 0v28M500 0v28M700 0v28M900 0v28M100 28h800M160 62v28M380 62v28M620 62v28M840 62v28M160 62h680" />
         </svg>
         <div className="flow-row is-bottom">
-          {bottom.map((item) => <Node key={item.id} siteId={site.id} {...item} />)}
+          {bottom.map((item) => (
+            <Node key={item.id} siteId={site.id} id={item.id} label={item.label} keys={item.keys} href={serviceHref(site.id, item.path, search)} />
+          ))}
         </div>
       </section>
       <section className="cmd-panel flow-points" aria-label="관제점">

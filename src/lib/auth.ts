@@ -12,7 +12,7 @@ const KEY = 't-arch-session'
 const TOKEN_KEY = 't-arch-token'
 const EVENT = 't-arch-auth'
 const NOTIFY_MS = 4 * 60 * 60 * 1000
-const TOKEN_MS = 12 * 60 * 60 * 1000
+const TOKEN_MS = 7 * 24 * 60 * 60 * 1000
 
 export type Entry = 'station' | 'workspace' | 'notify' | 'staff' | 'command'
 
@@ -92,12 +92,14 @@ export function homePath(input: Session | Session['role'] = 'ops'): string {
   if (typeof input !== 'string' && input.entry === 'command') return '/apps/events'
   const role = typeof input === 'string' ? input : input.role
   const siteIds = typeof input === 'string' ? undefined : input.siteIds
-  if (role === 'exec') {
+  const staff = typeof input !== 'string' && input.entry === 'staff'
+  if (role === 'exec' && !staff) {
     if (siteIds?.length === 1) return `/apps/events/sites/${siteIds[0]}?role=exec`
     return '/apps/events?role=exec'
   }
   const site = siteIds?.[0] ?? dutySiteId('events')
-  return `/apps/events/sites/${site}`
+  if (!site) return '/apps/events?view=flow'
+  return `/apps/events/sites/${site}?view=flow`
 }
 
 export function notifyHome(siteId: string, alarmId: string): string {
@@ -275,7 +277,7 @@ export async function acceptLogin(result: LoginResult, extra: { phone?: string; 
     const session: Session = {
       tenantId: tenant.id,
       name: result.name || result.email || extra.phone || '계정',
-      role: result.role,
+      role: extra.entry === 'staff' ? 'ops' : result.role,
       siteIds,
       entry: extra.entry,
       phone: extra.phone,

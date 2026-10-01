@@ -20,7 +20,7 @@ export const APP_LABEL: Record<AppId, string> = {
   metering: '검침',
   solar: '태양광',
   parking: '주차',
-  ev: '전기차충전',
+  ev: '전기차충전기',
 }
 
 export const DOMAIN_LABEL: Record<SystemDomain, string> = {
@@ -29,7 +29,7 @@ export const DOMAIN_LABEL: Record<SystemDomain, string> = {
   metering: '검침',
   solar: '태양광',
   parking: '주차',
-  ev: '전기차충전',
+  ev: '전기차충전기',
   hvac: '자동제어',
   fire: '소방',
   security: '침입',

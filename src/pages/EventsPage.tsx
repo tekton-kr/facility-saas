@@ -98,7 +98,10 @@ export function EventsPage() {
   if (!view && !siteId) {
     if (role !== 'exec' && !command) {
       const duty = dutySiteId('events')
-      if (duty) return <Navigate to={`/apps/events/sites/${duty}${search}`} replace />
+      if (duty) {
+        const flow = search.includes('view=') ? search : `${search ? `${search}&` : '?'}view=flow`
+        return <Navigate to={`/apps/events/sites/${duty}${flow}`} replace />
+      }
     }
     return <PortfolioDashboard service="events" />
   }
