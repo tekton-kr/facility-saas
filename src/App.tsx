@@ -22,6 +22,7 @@ import { ScreenRedirect } from './pages/ScreenRedirect.tsx'
 import { ContractPage } from './pages/ContractPage.tsx'
 import { PackagesPage } from './pages/PackagesPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
+import { ProfilePage } from './pages/ProfilePage.tsx'
 import { SystemPage } from './pages/SystemPage.tsx'
 import { WorkPage } from './pages/WorkPage.tsx'
 
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="/packages" element={<PackagesPage />} />
               <Route path="/packages/:packageId" element={<PackagesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/screens" element={<ScreenIndexPage />} />
               <Route path="/screens/:screenId" element={<ScreenRedirect />} />
               <Route path="/quality" element={<QualityPage />} />

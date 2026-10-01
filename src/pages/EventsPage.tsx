@@ -85,7 +85,7 @@ export function EventsPage() {
     ]
   }, [siteId])
 
-  if (!siteId && role === 'exec' && !view) {
+  if (role === 'exec' && !view) {
     return <PortfolioDashboard service="events" />
   }
 

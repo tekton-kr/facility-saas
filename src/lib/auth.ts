@@ -23,6 +23,7 @@ export type Session = {
   siteIds: string[]
   entry: Entry
   phone?: string
+  email?: string
   expiresAt?: string
   mustChangePassword?: boolean
 }
@@ -251,6 +252,7 @@ export async function acceptLogin(result: LoginResult, extra: { phone?: string; 
       siteIds,
       entry: extra.entry,
       phone: extra.phone,
+      email: result.email || undefined,
       expiresAt: new Date(Date.now() + TOKEN_MS).toISOString(),
       mustChangePassword: result.mustChangePassword,
     }

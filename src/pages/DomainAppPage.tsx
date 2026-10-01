@@ -3,7 +3,6 @@ import { CollectionPending } from '../components/CollectionPending.tsx'
 import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
 import { SiteDashboard } from '../components/SiteDashboard.tsx'
 import { DomainBoard } from '../components/DomainBoard.tsx'
-import { ExecBrief } from '../components/ExecBrief.tsx'
 import { InsightChips } from '../components/InsightChips.tsx'
 import { KpiRow } from '../components/KpiRow.tsx'
 import { PointCards } from '../components/PointCards.tsx'
@@ -35,8 +34,16 @@ export function DomainAppPage() {
   const rows = listPoints({ siteId, app, query })
   const siteHref = (id: string) => `/apps/${app}/sites/${id}${search}`
 
+  if (role === 'exec' && !view) {
+    return <PortfolioDashboard service={app} />
+  }
+
   if (!isAppCollected(app)) {
     return <CollectionPending title={`${APP_LABEL[app]} · 연동 대기`} />
+  }
+
+  if (role === 'exec' && !view) {
+    return <PortfolioDashboard service={app} />
   }
 
   if (view === 'peak' || view === 'eui' || view === 'pr' || view === 'gaps' || view === 'compare') {
@@ -45,14 +52,6 @@ export function DomainAppPage() {
 
   if (site && !siteHasApp(site, app)) {
     return <SiteDashboard site={site} service={app} />
-  }
-
-  if (role === 'exec' && siteId) {
-    return <ExecBrief />
-  }
-
-  if (role === 'exec') {
-    return <PortfolioDashboard service={app} />
   }
 
   const kpis = kpisForScope({ app, siteId, range })

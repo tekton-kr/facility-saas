@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import { siteHasApp, systemMatchesApp } from '../lib/catalog.ts'
 import { isDomainCollected } from '../lib/collection.ts'
 import { hasPortfolio, visibleSites } from '../lib/siteScope.ts'
-import { getScreens } from '../data/screens.ts'
 import { KIND_LABEL } from '../lib/format.ts'
 import { dutySiteId } from '../lib/roleHome.ts'
 import { alarmsForScope } from '../lib/telemetry.ts'
@@ -77,15 +76,18 @@ export function SiteTree({ open, onNavigate }: Props) {
             </div>
           )
         })}
+        <div className="tree-head">관리</div>
+        {role === 'ops' ? (
+          <NavLink
+            to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
+            className="tree-link"
+            onClick={onNavigate}
+          >
+            작업
+          </NavLink>
+        ) : null}
         <NavLink
-          to={siteId ? `/sites/${siteId}/work${search}` : `/work${search}`}
-          className="tree-link"
-          onClick={onNavigate}
-        >
-          작업
-        </NavLink>
-        <NavLink
-          to={siteId ? `/sites/${siteId}/contract${search}` : role === 'ops' ? `/sites/${dutySiteId('events')}/contract${search}` : `/packages${search}`}
+          to={siteId ? `/sites/${siteId}/contract${search}` : `/sites/${dutySiteId('events')}/contract${search}`}
           className="tree-link"
           onClick={onNavigate}
         >
@@ -96,12 +98,6 @@ export function SiteTree({ open, onNavigate }: Props) {
         </NavLink>
         <NavLink to={`/settings${search}`} className="tree-link" onClick={onNavigate}>
           설정
-        </NavLink>
-        <NavLink to={`/screens${search}`} className="tree-link" onClick={onNavigate}>
-          화면 {getScreens().length}면
-        </NavLink>
-        <NavLink to={`/quality${search}`} className="tree-link" onClick={onNavigate}>
-          데이터 품질
         </NavLink>
       </nav>
     </aside>

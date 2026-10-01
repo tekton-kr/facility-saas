@@ -12,6 +12,8 @@ export type MapPin = {
   to?: string
   attention?: boolean
   waiting?: boolean
+  sample?: boolean
+  positionSample?: boolean
 }
 
 function firstHit(rows: Array<{ x: string; y: string }> | undefined): MapPoint | null {

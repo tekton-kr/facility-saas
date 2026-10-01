@@ -450,6 +450,11 @@ export function generateAlarms(): Alarm[] {
   ]
 }
 
+export function apiAlarms(): Alarm[] | null {
+  if (!queryHydrated || !alarmCache) return null
+  return alarmCache
+}
+
 export function alarmsForScope(options: { siteId?: string; app?: AppId }): Alarm[] {
   const all = queryHydrated && alarmCache ? alarmCache : generateAlarms()
   return all.filter((alarm) => {

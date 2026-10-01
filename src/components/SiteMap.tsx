@@ -12,7 +12,7 @@ export function SiteMap({ sites }: Props) {
   const pins = useRef(sites)
   const [note, setNote] = useState('')
   const key = useMemo(
-    () => sites.map((site) => `${site.id}:${site.lat ?? ''}:${site.lng ?? ''}:${site.location ?? ''}:${site.name}:${site.to ?? ''}:${site.attention ? 1 : 0}:${site.waiting ? 1 : 0}`).join('|'),
+    () => sites.map((site) => `${site.id}:${site.lat ?? ''}:${site.lng ?? ''}:${site.location ?? ''}:${site.name}:${site.to ?? ''}:${site.attention ? 1 : 0}:${site.waiting ? 1 : 0}:${site.sample ? 1 : 0}:${site.positionSample ? 1 : 0}`).join('|'),
     [sites],
   )
 
@@ -45,11 +45,13 @@ export function SiteMap({ sites }: Props) {
           const position = new maps.LatLng(point.lat, point.lng)
           const button = document.createElement('button')
           button.type = 'button'
-          button.className = pin.attention ? 'site-map-pin is-attention' : pin.waiting ? 'site-map-pin is-wait' : 'site-map-pin'
+          button.className = `site-map-pin${pin.attention ? ' is-attention' : ''}${pin.waiting ? ' is-wait' : ''}${pin.sample || pin.positionSample ? ' is-sample' : ''}`
           const name = document.createElement('strong')
           name.textContent = pin.name
           const state = document.createElement('span')
-          state.textContent = pin.attention ? '이상' : pin.waiting ? '수신 대기' : '이상 없음'
+          const status = pin.attention ? '이상' : pin.waiting ? '수신 대기' : '이상 없음'
+          const mark = pin.sample ? '예시' : pin.positionSample ? '위치 예시' : ''
+          state.textContent = mark ? `${status} · ${mark}` : status
           button.append(name, state)
           if (pin.to) {
             const href = pin.to

@@ -165,12 +165,6 @@ public/login-*.jpg
 # Hosting / tool caches
 .netlify/
 
-# OS
-.DS_Store
-Thumbs.db
-Desktop.ini
-ehthumbs.db
-
 # Editors / IDEs
 .idea/
 .vscode/*
@@ -193,6 +187,20 @@ ehthumbs.db
 tmp/
 .tmp-*
 *.tmp
+*.orig
+*.rej
+*.bak
+.history/
+
+# Local workspace files. Shared editor settings stay.
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
 
 # Secrets / keys
 *.pem
