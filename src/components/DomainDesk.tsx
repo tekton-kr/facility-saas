@@ -2,6 +2,13 @@ import type { ReactNode } from 'react'
 import type { EquipmentDef, SiteDef, SystemDef } from '../types/domain.ts'
 import { formatDateTime } from '../lib/format.ts'
 import { alarmsForScope, getTelemetry } from '../lib/telemetry.ts'
+import { EhpBoard } from './EhpBoard.tsx'
+import { ChargeBoard } from './ChargeBoard.tsx'
+import { FireReceiver } from './FireReceiver.tsx'
+import { MeterBoard } from './MeterBoard.tsx'
+import { LiftBoard } from './LiftBoard.tsx'
+import { PowerBoard } from './PowerBoard.tsx'
+import { PlantBoard } from './PlantBoard.tsx'
 
 export type DeskId = 'events' | 'power' | 'light' | 'metering' | 'ehp' | 'fire' | 'elevator' | 'ev' | 'parking'
 
@@ -40,12 +47,13 @@ const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string
   },
   metering: {
     title: '원격검침',
-    lead: '전력량, 수도, 가스, 열량입니다. 없는 값은 비워 둡니다.',
+    lead: '가스, 전기, 급탕, 난방, 급수입니다. 없는 값은 비워 둡니다.',
     tiles: [
-      { label: '전력량', keys: ['전력량', 'kwh', '유효전력량'] },
-      { label: '수도', keys: ['수도', '유량'] },
-      { label: '가스', keys: ['가스'] },
-      { label: '열량', keys: ['열량'] },
+      { label: '가스', keys: ['가스', 'gas'] },
+      { label: '전기', keys: ['전기', '전력', 'kwh'] },
+      { label: '급탕', keys: ['급탕', '온수'] },
+      { label: '난방', keys: ['난방', '열량'] },
+      { label: '급수', keys: ['급수', '수도', '유량'] },
     ],
   },
   ehp: {
@@ -79,7 +87,7 @@ const COPY: Record<DeskId, { title: string; lead: string; tiles: { label: string
     ],
   },
   ev: {
-    title: '전기차',
+    title: '전기차충전',
     lead: '충전기별 상태와 충전 전력입니다.',
     tiles: [
       { label: '충전', keys: ['충전'] },
@@ -156,12 +164,19 @@ function matchTile(rows: PointRow[], keys: string[]): PointRow | undefined {
 }
 
 export function DomainDesk({ site, desk }: { site?: SiteDef; desk: DeskId }) {
+  if (desk === 'events') return <PlantBoard site={site} />
+  if (desk === 'ehp') return <EhpBoard site={site} />
+  if (desk === 'ev') return <ChargeBoard site={site} />
+  if (desk === 'fire') return <FireReceiver site={site} />
+  if (desk === 'metering') return <MeterBoard site={site} />
+  if (desk === 'elevator') return <LiftBoard site={site} />
+  if (desk === 'power') return <PowerBoard site={site} />
   const copy = COPY[desk]
   const systems = site ? systemsFor(site, desk) : []
   const rows = pointsOf(systems)
   const alarms = site
     ? alarmsForScope({ siteId: site.id }).filter((alarm) => (
-      systems.some((system) => system.id === alarm.systemId) || (desk === 'events' && alarm.kind === 'equipment')
+      systems.some((system) => system.id === alarm.systemId)
     ))
     : []
 

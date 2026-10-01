@@ -186,7 +186,7 @@ export function SiteTree({ open, onNavigate }: Props) {
                 {item.label}
               </NavLink>
             ))}
-            <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차</NavLink>
+            <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차충전</NavLink>
             <NavLink to={serviceTo('parking')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="park" />주차</NavLink>
             <div className="tree-head">근무</div>
             <NavLink to={record('staff')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="crew" />직원관리</NavLink>

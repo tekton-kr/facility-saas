@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import EchartsReactCore from 'echarts-for-react/lib/core'
 import { BarChart, GaugeChart, LineChart, PieChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
+import { GraphicComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts'
 import { chartTone, readTheme } from '../lib/theme.ts'
 
-echarts.use([BarChart, GaugeChart, LineChart, PieChart, GridComponent, TooltipComponent, CanvasRenderer])
+echarts.use([BarChart, GaugeChart, LineChart, PieChart, GraphicComponent, GridComponent, TooltipComponent, CanvasRenderer])
 
 const ReactEChartsCore = (
   EchartsReactCore as unknown as { default?: typeof EchartsReactCore }
@@ -54,7 +54,7 @@ export function OwnerMix({ slices, total }: { slices: Slice[]; total: number }) 
         type: 'text',
         left: 'center',
         top: '58%',
-        style: { text: '嫄대Ъ', fill: tone.muted, fontSize: 12 },
+        style: { text: '건물', fill: tone.muted, fontSize: 12 },
       },
     ],
   }), [slices, total, tone])
@@ -136,8 +136,9 @@ export function OwnerGauge({ value, max, color }: { value: number; max: number; 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 78 }} />
 }
 
-export function OwnerLine({ labels, values }: { labels: string[]; values: number[] }) {
+export function OwnerLine({ labels, values, color }: { labels: string[]; values: number[]; color?: string }) {
   const tone = useTone()
+  const line = color ?? tone.line
   const option = useMemo<EChartsOption>(() => ({
     animation: false,
     grid: { left: 36, right: 12, top: 8, bottom: 20 },
@@ -165,11 +166,11 @@ export function OwnerLine({ labels, values }: { labels: string[]; values: number
         data: values,
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 2, color: tone.line },
+        lineStyle: { width: 2, color: line },
         areaStyle: { color: tone.area },
       },
     ],
-  }), [labels, values, tone])
+  }), [labels, values, tone, line])
 
   return <ReactEChartsCore echarts={echarts} option={option} style={{ height: 92 }} />
 }

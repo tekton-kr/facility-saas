@@ -133,6 +133,25 @@ export function PowerFlow({ site }: { site: SiteDef }) {
         </div>
         <p>{site.location || '이 건물'} · 관제점 {points.length} · 수신 {live.length} · 수신 없음 {points.length - live.length}</p>
       </header>
+      <section className="building-card" aria-label="건물 정보">
+        <div className="building-photo">
+          {site.photo ? <img src={site.photo} alt="" /> : (
+            <svg viewBox="0 0 80 64" aria-hidden="true">
+              <path d="M8 56V28L40 8l32 20v28H8Z" />
+              <path d="M32 56V36h16v20" />
+            </svg>
+          )}
+        </div>
+        <dl>
+          <div><dt>주소</dt><dd>{site.location || '미등록'}</dd></div>
+          <div><dt>준공일</dt><dd>{site.built || '미등록'}</dd></div>
+          <div><dt>연면적</dt><dd>{site.areaM2 ? `${site.areaM2.toLocaleString('ko-KR')} m²` : '미등록'}</dd></div>
+          <div><dt>건물주</dt><dd>{site.owner || '미등록'}</dd></div>
+          <div><dt>연락처</dt><dd>{site.phone || '미등록'}</dd></div>
+          <div><dt>관리</dt><dd>{site.manager || '미등록'}</dd></div>
+          <div><dt>상태</dt><dd>{live.length > 0 ? '수신 중' : '수신 대기'}</dd></div>
+        </dl>
+      </section>
       <section className="flow-board" aria-label="전력 흐름">
         <div className="flow-row is-top">
           {top.map((item) => <Node key={item.id} siteId={site.id} {...item} />)}

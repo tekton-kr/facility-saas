@@ -250,3 +250,12 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Vite prebundle leftovers, including copies outside node_modules
+**/deps_temp_*/
+**/.tmp/
+
+# One-off local previews. Not app pages.
+public/_*.html
+scripts/_*.mjs
+scripts/_*.html

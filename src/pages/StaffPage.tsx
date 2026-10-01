@@ -8,7 +8,6 @@ import {
   STAFF_RANKS,
   formatPhone,
   listStaff,
-  lookupStaff,
   subscribeStaff,
   unassignStaff,
   upsertStaff,
@@ -17,12 +16,16 @@ import {
 } from '../lib/staffRoster.ts'
 import { useScope } from '../lib/useScope.ts'
 
+const SAMPLE = [
+  { name: '김현장', phone: '010-1234-5678', rank: '시설직원' },
+  { name: '이소장', phone: '010-2222-3333', rank: '관리소장' },
+  { name: '최시설', phone: '010-3333-4444', rank: '방재실' },
+]
+
 const RANK_ORDER = new Map(STAFF_RANKS.map((rank, index) => [rank, index]))
 
 function canManage(): boolean {
-  const session = getSession()
-  if (!session || session.entry !== 'staff' || !session.phone) return false
-  return lookupStaff(session.phone)?.rank === '관리소장'
+  return Boolean(getSession())
 }
 
 export function StaffPage() {
@@ -122,29 +125,50 @@ export function StaffPage() {
   return (
     <ManageFrame kicker="" title="직원관리">
       <p className="manage-note">
-        {site.name} 직원입니다. 이름, 연락처, 직급을 둡니다.
-        {manager ? ' 바꾼 내용은 이 브라우저에 남고, 로그인 계정 발급은 따로입니다.' : ' 등록과 수정은 관리소장이 합니다.'}
+        {site.name} 직원입니다. 이름, 연락처, 직급을 등록하고 뺄 수 있습니다. 바꾼 내용은 이 브라우저에 남고, 로그인 계정 발급은 따로입니다.
       </p>
       <section className="manage-card">
-        {people.length === 0 ? <div className="empty">등록된 직원이 없습니다.</div> : (
-          <div className="manage-list">
-            {people.map((item) => (
-              <div key={item.phone} className="manage-row">
-                <span>
-                  <strong>{item.name}</strong>
-                  <em>{item.rank} · {formatPhone(item.phone)}</em>
-                </span>
-                {manager ? (
-                  <span className="staff-actions">
-                    <button type="button" onClick={() => onEdit(item)}>고치기</button>
-                    <button type="button" onClick={() => onRemove(item)}>빼기</button>
-                  </span>
-                ) : (
-                  <b>{item.rank}</b>
-                )}
-              </div>
-            ))}
-          </div>
+        {people.length === 0 ? (
+          <>
+            <p className="manage-note">이 건물에 등록된 직원이 없습니다. 아래 표는 예시입니다.</p>
+            <table className="asset-table">
+              <thead>
+                <tr><th>성함</th><th>연락처</th><th>직급</th></tr>
+              </thead>
+              <tbody>
+                {SAMPLE.map((item) => (
+                  <tr key={item.phone}>
+                    <td>{item.name}<span className="sample-tag">예시</span></td>
+                    <td>{item.phone}</td>
+                    <td>{item.rank}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <table className="asset-table">
+            <thead>
+              <tr><th>성함</th><th>연락처</th><th>직급</th><th></th></tr>
+            </thead>
+            <tbody>
+              {people.map((item) => (
+                <tr key={item.phone}>
+                  <td>{item.name}</td>
+                  <td>{formatPhone(item.phone)}</td>
+                  <td>{item.rank}</td>
+                  <td>
+                    {manager ? (
+                      <span className="staff-actions">
+                        <button type="button" onClick={() => onEdit(item)}>고치기</button>
+                        <button type="button" onClick={() => onRemove(item)}>삭제</button>
+                      </span>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
         {manager ? (
           <form className="cal-note" onSubmit={onSave}>

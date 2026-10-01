@@ -44,6 +44,8 @@ export type EquipmentDef = {
   name: string
   tags: string[]
   points: PointDef[]
+  model?: string
+  image?: string
 }
 
 export type SystemDef = {
@@ -63,6 +65,10 @@ export type SiteDef = {
   lng?: number
   areaM2?: number
   photo?: string
+  built?: string
+  owner?: string
+  phone?: string
+  manager?: string
   connectorIds: string[]
   plans: FloorPlan[]
   cameras: CameraRef[]

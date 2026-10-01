@@ -122,34 +122,86 @@ export function PhotosPage() {
 
 export function DrawingsPage() {
   const { siteId, site } = usePlace()
-  const [open, setOpen] = useState<string | undefined>(undefined)
+  const rows = siteId ? drawingsFor(siteId) : []
+  const [open, setOpen] = useState<string | undefined>(rows[0]?.id)
   if (!siteId) return <SiteChoices title="준공 도면" path="drawings" />
   if (!site) return <ManageFrame kicker="도면" title="현장을 찾지 못했습니다"><div className="empty">배정 목록에 없는 건물입니다.</div></ManageFrame>
-  const rows = drawingsFor(site.id)
-  const picked = rows.find((item) => item.id === open)
+  const picked = rows.find((item) => item.id === open) ?? rows[0]
   return (
     <ManageFrame kicker="" title="준공 도면">
-      <p className="manage-note">도면 파일은 서버에 올리지 않습니다. 이름과 구분만 보여 줍니다.</p>
-      <section className="manage-card">
-        <div className="manage-list">
-          {rows.map((item) => (
-            <button key={item.id} className="manage-row" type="button" onClick={() => setOpen(item.id)}>
-              <span>
-                <strong>{item.name}<SampleTag /></strong>
-                <em>{item.equipment} · {item.kind}</em>
-              </span>
-              <b>보기</b>
-            </button>
-          ))}
-        </div>
-      </section>
-      {picked ? (
+      <p className="manage-note">원본 도면 파일은 아직 없습니다. 아래 그림은 배치 예시입니다.</p>
+      <div className="drawing-layout">
         <section className="manage-card">
-          <h2>{picked.name}</h2>
-          <p className="manage-note">{picked.equipment} · {picked.kind}. 원본 파일은 이 화면에 없습니다.</p>
+          <h2>도면</h2>
+          <div className="manage-list">
+            {rows.map((item) => (
+              <button key={item.id} className={`manage-row${item.id === picked?.id ? ' is-on' : ''}`} type="button" onClick={() => setOpen(item.id)}>
+                <span>
+                  <strong>{item.name}<SampleTag /></strong>
+                  <em>{item.equipment} · {item.kind}</em>
+                </span>
+              </button>
+            ))}
+          </div>
         </section>
-      ) : null}
+        {picked ? <DrawingSheet name={picked.name} kind={picked.kind} /> : null}
+      </div>
     </ManageFrame>
+  )
+}
+
+function DrawingSheet({ name, kind }: { name: string; kind: string }) {
+  return (
+    <section className="manage-card drawing-sheet" aria-label={name}>
+      <h2>{name}<SampleTag /></h2>
+      <p className="manage-note">{kind}. 격자 위의 선은 예시이고, 현장 준공도와 같지 않습니다.</p>
+      <svg viewBox="0 0 640 360" className="drawing-plan" role="img" aria-label={`${name} 예시`}>
+        <rect x="24" y="24" width="592" height="312" className="drawing-frame" />
+        {Array.from({ length: 8 }, (_, index) => (
+          <line key={`v-${index}`} x1={24 + index * 84} y1="24" x2={24 + index * 84} y2="336" className="drawing-grid" />
+        ))}
+        {Array.from({ length: 5 }, (_, index) => (
+          <line key={`h-${index}`} x1="24" y1={24 + index * 78} x2="616" y2={24 + index * 78} className="drawing-grid" />
+        ))}
+        {kind === '계통도' ? (
+          <>
+            <line x1="80" y1="70" x2="560" y2="70" className="drawing-power" />
+            <line x1="140" y1="70" x2="140" y2="250" className="drawing-power" />
+            <line x1="280" y1="70" x2="280" y2="250" className="drawing-power" />
+            <line x1="420" y1="70" x2="420" y2="250" className="drawing-power" />
+            <rect x="112" y="240" width="56" height="36" className="drawing-symbol" />
+            <rect x="252" y="240" width="56" height="36" className="drawing-symbol" />
+            <rect x="392" y="240" width="56" height="36" className="drawing-symbol" />
+            <text x="118" y="262">수전</text>
+            <text x="258" y="262">분전</text>
+            <text x="398" y="262">부하</text>
+          </>
+        ) : kind === '준공도' && name.includes('소화') ? (
+          <>
+            <rect x="70" y="60" width="500" height="240" className="drawing-room" />
+            <line x1="70" y1="120" x2="570" y2="120" className="drawing-pipe" />
+            <line x1="70" y1="200" x2="570" y2="200" className="drawing-pipe" />
+            <circle cx="160" cy="120" r="8" className="drawing-head" />
+            <circle cx="300" cy="120" r="8" className="drawing-head" />
+            <circle cx="440" cy="120" r="8" className="drawing-head" />
+            <circle cx="220" cy="200" r="8" className="drawing-head" />
+            <circle cx="380" cy="200" r="8" className="drawing-head" />
+            <text x="84" y="96">소화 배관</text>
+          </>
+        ) : (
+          <>
+            <rect x="60" y="56" width="220" height="140" className="drawing-room" />
+            <rect x="300" y="56" width="250" height="140" className="drawing-room" />
+            <rect x="60" y="214" width="490" height="90" className="drawing-room" />
+            <text x="78" y="92">기계실</text>
+            <text x="318" y="92">공조실</text>
+            <text x="78" y="250">복도</text>
+            <rect x="150" y="120" width="48" height="32" className="drawing-symbol" />
+            <rect x="390" y="120" width="48" height="32" className="drawing-symbol" />
+          </>
+        )}
+      </svg>
+    </section>
   )
 }
 

@@ -1,74 +1,65 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ManageFrame } from '../components/ManageFrame.tsx'
 import { countPoints, getSite, listPoints } from '../lib/catalog.ts'
 import { visibleSites } from '../lib/siteScope.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
-import type { SiteDef } from '../types/domain.ts'
 
-function receivedCount(site: SiteDef): number {
-  return listPoints({ siteId: site.id }).filter((row) => {
-    const tel = getTelemetry(row, 'live')
-    return tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
-  }).length
+const KINDS = [
+  { id: 'all', label: '전체' },
+  { id: 'gas', label: '가스' },
+  { id: 'elec', label: '전기' },
+  { id: 'dhw', label: '급탕' },
+  { id: 'heat', label: '난방' },
+  { id: 'water', label: '급수' },
+] as const
+
+type KindId = (typeof KINDS)[number]['id']
+
+function kindOf(hay: string): Exclude<KindId, 'all'> | 'other' {
+  if (hay.includes('급탕') || hay.includes('온수')) return 'dhw'
+  if (hay.includes('난방') || hay.includes('열량')) return 'heat'
+  if (hay.includes('가스') || hay.includes('gas')) return 'gas'
+  if (hay.includes('급수') || hay.includes('수도') || hay.includes('유량') || hay.includes('water')) return 'water'
+  if (hay.includes('전기') || hay.includes('전력') || hay.includes('elec') || hay.includes('kwh')) return 'elec'
+  return 'other'
 }
 
-function AssetCard({ site }: { site: SiteDef }) {
-  const equipment = site.systems.reduce((sum, system) => sum + system.equipment.length, 0)
-  const points = countPoints(site)
-  const received = receivedCount(site)
-  const rows = [
-    { label: '설비', value: `${equipment}`, note: equipment > 0 ? '카탈로그에 등록됨' : '등록 없음' },
-    { label: '관제점', value: `${points}`, note: points === 0 ? '등록 없음' : `수신 ${received} · 수신 없음 ${points - received}` },
-    { label: '도면', value: site.plans.length > 0 ? `${site.plans.length}` : '없음', note: site.plans.length > 0 ? site.plans.map((item) => item.name).join(' · ') : '등록된 준공 도면 없음' },
-    { label: '카메라', value: site.cameras.length > 0 ? `${site.cameras.length}` : '없음', note: site.cameras.length > 0 ? '현장 카메라 목록' : '등록된 카메라 없음' },
-    { label: '연결', value: site.connectorIds.length > 0 ? `${site.connectorIds.length}` : '없음', note: site.connectorIds.length > 0 ? '수집 연결' : '등록된 연결 없음' },
-  ]
-  return (
-    <section className="manage-card">
-      <h2>{site.name}</h2>
-      <p className="manage-note">{site.location || '위치 미등록'}</p>
-      <div className="manage-list">
-        {rows.map((row) => (
-          <div key={row.label} className="manage-row">
-            <span>
-              <strong>{row.label}</strong>
-              <em>{row.note}</em>
-            </span>
-            <b>{row.value}</b>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
+const KIND_LABEL: Record<Exclude<KindId, 'all'> | 'other', string> = {
+  gas: '가스',
+  elec: '전기',
+  dhw: '급탕',
+  heat: '난방',
+  water: '급수',
+  other: '기타',
 }
 
 export function AssetsPage() {
   const { siteId, search } = useScope()
   const site = siteId ? getSite(siteId) : undefined
   const sites = visibleSites()
+  const [kind, setKind] = useState<KindId>('all')
 
   if (!siteId) {
     return (
       <ManageFrame kicker="" title="데이터자산">
-        <p className="manage-note">배정 건물에 등록된 설비, 관제점, 도면, 카메라입니다. 예시로 채운 사진과 도면은 세지 않습니다.</p>
-        {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
-          <>
-            <section className="manage-card">
-              <div className="manage-list">
-                {sites.map((item) => (
-                  <Link key={item.id} className="manage-row" to={`/sites/${item.id}/assets${search}`}>
-                    <span>
-                      <strong>{item.name}</strong>
-                      <em>관제점 {countPoints(item)} · 설비 {item.systems.reduce((sum, system) => sum + system.equipment.length, 0)}</em>
-                    </span>
-                    <b>열기</b>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
+        <p className="manage-note">건물을 고르면 그 현장의 계량기 목록이 열립니다.</p>
+        <section className="manage-card">
+          {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
+            <div className="manage-list">
+              {sites.map((item) => (
+                <Link key={item.id} className="manage-row" to={`/sites/${item.id}/assets${search}`}>
+                  <span>
+                    <strong>{item.name}</strong>
+                    <em>관제점 {countPoints(item)}</em>
+                  </span>
+                  <b>열기</b>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </ManageFrame>
     )
   }
@@ -81,10 +72,61 @@ export function AssetsPage() {
     )
   }
 
+  const rows = listPoints({ siteId: site.id }).map((row) => {
+    const hay = `${row.system.name} ${row.equipment.name} ${row.point.name} ${row.point.tags.join(' ')}`.toLowerCase()
+    const tel = getTelemetry(row, 'live')
+    const received = tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
+    return {
+      id: `${row.system.id}-${row.equipment.id}-${row.point.id}`,
+      kind: kindOf(hay),
+      place: row.equipment.name,
+      point: row.point.name,
+      system: row.system.name,
+      received,
+    }
+  })
+  const shown = kind === 'all' ? rows : rows.filter((row) => row.kind === kind)
+
   return (
     <ManageFrame kicker="" title="데이터자산">
-      <p className="manage-note">이 건물에 등록된 데이터입니다. 값을 받지 못한 관제점은 수신 없음으로 셉니다. 예시 자료는 넣지 않습니다.</p>
-      <AssetCard site={site} />
+      <p className="manage-note">{site.name} · 가스, 전기, 급탕, 난방, 급수 계량기입니다. 번호와 사용자가 없으면 비워 둡니다.</p>
+      <div className="chip-row" role="group" aria-label="검침 구분">
+        {KINDS.map((item) => (
+          <button key={item.id} type="button" className={kind === item.id ? 'is-active' : ''} onClick={() => setKind(item.id)}>
+            {item.label} {item.id === 'all' ? rows.length : rows.filter((row) => row.kind === item.id).length}
+          </button>
+        ))}
+      </div>
+      <section className="manage-card">
+        {shown.length === 0 ? <div className="empty">이 구분에 등록된 계량기가 없습니다.</div> : (
+          <table className="asset-table">
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>설비</th>
+                <th>관제점</th>
+                <th>계통</th>
+                <th>계량기 번호</th>
+                <th>사용자</th>
+                <th>수신</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((row) => (
+                <tr key={row.id}>
+                  <td>{KIND_LABEL[row.kind]}</td>
+                  <td>{row.place}</td>
+                  <td>{row.point}</td>
+                  <td>{row.system}</td>
+                  <td>미등록</td>
+                  <td>미등록</td>
+                  <td>{row.received ? '수신' : '수신 없음'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </ManageFrame>
   )
 }

@@ -27,7 +27,7 @@ export function BottomNav() {
         { id: 'events', label: '기계설비', to: siteApp('events') },
         { id: 'power', label: '전력', to: siteApp('power') },
         { id: 'metering', label: '검침', to: siteApp('metering') },
-        { id: 'ev', label: '전기차', to: siteApp('ev') },
+        { id: 'ev', label: '전기차충전', to: siteApp('ev') },
         { id: 'parking', label: '주차', to: siteApp('parking') },
       ]
 
