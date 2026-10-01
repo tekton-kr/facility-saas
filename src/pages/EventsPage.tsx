@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { AlarmCards } from '../components/AlarmCards.tsx'
 import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
 import { DomainDesk } from '../components/DomainDesk.tsx'
+import { PowerFlow } from '../components/PowerFlow.tsx'
 import { DataTable } from '../components/DataTable.tsx'
 import { EventContext } from '../components/EventContext.tsx'
 import { EventFilters } from '../components/EventFilters.tsx'
@@ -85,6 +86,14 @@ export function EventsPage() {
       },
     ]
   }, [siteId])
+
+  if (view === 'flow') {
+    if (!scopedSite) {
+      const duty = dutySiteId('events')
+      if (duty) return <Navigate to={`/apps/events/sites/${duty}?view=flow`} replace />
+    }
+    if (scopedSite) return <PowerFlow site={scopedSite} />
+  }
 
   if (!view && !siteId) {
     if (role !== 'exec' && !command) {

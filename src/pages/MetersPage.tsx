@@ -47,7 +47,7 @@ export function MetersPage() {
   if (!siteId) {
     const sites = visibleSites()
     return (
-      <ManageFrame kicker="전체 현장" title="설비 전력량계">
+      <ManageFrame kicker="" title="설비 전력량계">
         <p className="manage-note">건물을 고르면 그 현장 설비의 전력량계가 열립니다. 수전 화면과는 따로입니다.</p>
         <section className="manage-card">
           {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
@@ -77,7 +77,7 @@ export function MetersPage() {
   const rows = equipmentOf(site)
 
   return (
-    <ManageFrame kicker={site.name} title="설비 전력량계">
+    <ManageFrame kicker="" title="설비 전력량계">
       <p className="manage-note">
         {covered
           ? '이 현장 계약에 설비 전력량계가 포함됩니다. 평소보다 높으면 그 계약의 작업으로 넘길 수 있습니다.'

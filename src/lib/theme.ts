@@ -1,7 +1,5 @@
 export const THEMES = [
   { id: 'navy', label: '남색', swatch: '#12304c' },
-  { id: 'teal', label: '청록', swatch: '#0e7f8c' },
-  { id: 'day', label: '하양', swatch: '#f4f7fb' },
   { id: 'sky', label: '하늘', swatch: '#d7ebf7' },
   { id: 'sand', label: '모래', swatch: '#f3e6d4' },
   { id: 'mint', label: '민트', swatch: '#d7f0e4' },
@@ -32,28 +30,6 @@ const CHART: Record<ThemeId, ChartTone> = {
     tipLine: 'rgba(120, 180, 220, 0.35)',
     ink: '#f4fbff',
     track: 'rgba(120, 170, 210, 0.18)',
-  },
-  teal: {
-    text: '#e7fbff',
-    muted: '#9ec9d4',
-    grid: 'rgba(80, 200, 220, 0.18)',
-    line: '#3ee0f0',
-    area: 'rgba(62, 224, 240, 0.16)',
-    tip: '#071722',
-    tipLine: 'rgba(80, 210, 220, 0.4)',
-    ink: '#f4fbff',
-    track: 'rgba(80, 200, 220, 0.18)',
-  },
-  day: {
-    text: '#173044',
-    muted: '#5c7388',
-    grid: 'rgba(70, 110, 150, 0.16)',
-    line: '#0e7f8c',
-    area: 'rgba(14, 127, 140, 0.12)',
-    tip: '#ffffff',
-    tipLine: 'rgba(70, 110, 150, 0.28)',
-    ink: '#173044',
-    track: 'rgba(70, 110, 150, 0.16)',
   },
   sky: {
     text: '#143044',
@@ -103,7 +79,7 @@ export function readTheme(): ThemeId {
   } catch {
     /* ignore */
   }
-  return 'navy'
+  return 'sky'
 }
 
 export function writeTheme(id: ThemeId) {

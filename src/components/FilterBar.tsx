@@ -27,19 +27,21 @@ function siteLabel(siteId: string | undefined): string | undefined {
 }
 
 function headerCopy(pathname: string, siteName: string | undefined, app: AppId | undefined): { kicker: string, title: string } {
-  if (pathname.startsWith('/profile')) return { kicker: siteName ?? '계정', title: '프로필' }
-  if (pathname.startsWith('/settings')) return { kicker: siteName ?? '계정', title: '설정' }
-  if (pathname.includes('/contract')) return { kicker: siteName ?? '시설관리', title: '유지보수' }
-  if (pathname.includes('/calendar')) return { kicker: siteName ?? '시설관리', title: '일정표' }
-  if (pathname.includes('/roster')) return { kicker: siteName ?? '시설관리', title: '근무표' }
-  if (pathname.includes('/meters')) return { kicker: siteName ?? '시설관리', title: '설비 전력량계' }
-  if (pathname.includes('/domains/ehp')) return { kicker: siteName ?? '대시보드', title: 'EHP' }
-  if (pathname.includes('/domains/fire')) return { kicker: siteName ?? '대시보드', title: '소방' }
-  if (pathname.includes('/domains/elevator')) return { kicker: siteName ?? '대시보드', title: '엘리베이터' }
-  if (pathname.startsWith('/packages')) return { kicker: siteName ?? '시설관리', title: '개보수' }
+  const place = siteName ?? '전체 현장'
+  if (pathname.startsWith('/profile')) return { kicker: '계정', title: '프로필' }
+  if (pathname.startsWith('/settings')) return { kicker: '계정', title: place }
+  if (!siteName && /^\/apps\/[^/]+$/.test(pathname)) {
+    return { kicker: '대시보드', title: '배정 현황' }
+  }
+  if (/\/(roster|work)(\/|$)/.test(pathname) || pathname.includes('/domains/')) {
+    return { kicker: '현장', title: place }
+  }
+  if (/\/(inspections|cycles|photos|drawings|meters|schedule|contract|calendar|packages)(\/|$)/.test(pathname)) {
+    return { kicker: '대시보드', title: place }
+  }
   return {
     kicker: (app && SERVICE_LABEL[app]) || '시설관리',
-    title: siteName ?? '전체 현장',
+    title: place,
   }
 }
 
@@ -52,12 +54,14 @@ type Props = {
 export function FilterBar({ compact, onToggleTree, onOpenCommand }: Props) {
   const session = useAuth()
   const location = useLocation()
-  const { app, siteId, range, query, role, command, search, patchParams, goSite, goHome, goRole } = useScope()
+  const { app, siteId, range, query, role, command, search, view, patchParams, goSite, goHome, goRole } = useScope()
   const sync = lastSyncAt()
   const critical = alarmsForScope({ siteId, app: 'events' }).filter((item) => item.severity === 'critical').length
   const ownerHome = role === 'exec' && !command
   const place = siteLabel(siteId)
-  const heading = headerCopy(location.pathname, place, app)
+  const heading = view === 'flow'
+    ? { kicker: '현장', title: headerCopy(location.pathname, place, app).title }
+    : headerCopy(location.pathname, place, app)
 
   return (
     <header className="filter">

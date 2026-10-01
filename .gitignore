@@ -232,6 +232,12 @@ credentials.json
 .supabase/
 public/layout-check-sw.js
 
+# Local dumps and traces
+*.trace
+*.heapsnapshot
+*.cpuprofile
+*.heapsnapshot.*
+
 # Test / e2e artifacts
 test-results/
 playwright-report/

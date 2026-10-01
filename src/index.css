@@ -901,7 +901,7 @@ a:focus-visible {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  margin: 12px 8px 4px;
+  margin: 12px 8px 18px;
   padding: 3px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1008,7 +1008,7 @@ a:focus-visible {
 }
 
 .tree-link.is-feature {
-  margin: 2px 0 4px;
+  margin: 8px 0 4px;
   border: 1px solid var(--tone-line-soft, var(--border));
   background: rgb(255 255 255 / 4%);
   font-weight: 720;
@@ -1047,9 +1047,40 @@ a:focus-visible {
   background: var(--surface-muted);
 }
 
+.tree-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0 16px;
+  color: var(--text-disabled);
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.tree-contact a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: inherit;
+  user-select: text;
+}
+
+.tree-contact svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 .tree-copy {
   margin: 0;
-  padding: 10px 16px 16px;
+  padding: 4px 16px 16px;
   color: var(--text-disabled);
   font-size: 11px;
   font-weight: 560;
@@ -4753,6 +4784,13 @@ button.drawer-open {
   background: var(--tone-bg);
 }
 
+@media (min-width: 1101px) {
+  .main:has(.cmd),
+  .main:has(.manage) {
+    padding-right: 68px;
+  }
+}
+
 .main:has(.cmd.is-wall) {
   overflow: hidden;
 }
@@ -4770,6 +4808,13 @@ button.drawer-open {
 .cmd.is-wall .cmd-head {
   flex: 0 0 auto;
   margin-bottom: 0;
+}
+
+.cmd.is-wall .cmd-head p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cmd.is-wall .cmd-head h1 {
@@ -4799,6 +4844,7 @@ button.drawer-open {
 .cmd.is-wall .cmd-board {
   flex: 1 1 auto;
   min-height: 0;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) minmax(200px, 280px);
   grid-template-rows: minmax(0, 1fr) minmax(108px, 0.42fr);
   gap: 8px;
 }
@@ -4828,6 +4874,81 @@ button.drawer-open {
 
 .cmd.is-wall .cmd-line {
   flex: 0 0 auto;
+}
+
+.flow-board {
+  display: grid;
+  grid-template-rows: auto 72px auto;
+  gap: 0;
+  min-height: 0;
+}
+
+.flow-row {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-row.is-top {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.flow-row.is-bottom {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flow-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+.flow-node svg {
+  width: 64px;
+  height: 48px;
+  fill: none;
+  stroke: var(--tone-accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.flow-node p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.flow-node b {
+  color: var(--tone-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.flow-node b.is-empty {
+  color: var(--tone-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.flow-node strong {
+  color: var(--tone-text);
+  font-size: 14px;
+}
+
+.flow-wires {
+  width: 100%;
+  height: 72px;
+}
+
+.flow-wires path {
+  fill: none;
+  stroke: var(--tone-accent);
+  stroke-width: 1.4;
+  opacity: 0.7;
 }
 
 .cmd {
@@ -5261,6 +5382,7 @@ button.drawer-open {
 .shell:has(.cmd) .tree-kind,
 .shell:has(.cmd) .tree-child,
 .shell:has(.cmd) .tree-copy,
+.shell:has(.cmd) .tree-contact,
 .shell:has(.cmd) .alarm-card-meta {
   color: var(--tone-muted);
 }
@@ -5563,6 +5685,21 @@ button.manage-row {
   box-shadow: inset 0 0 0 1px rgb(15 35 55 / 22%);
 }
 
+.oss-fold summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 720;
+  list-style: none;
+}
+
+.oss-fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.oss-fold .manage-list {
+  margin-top: 8px;
+}
+
 .cmd.manage {
   min-height: 100%;
 }
@@ -5723,10 +5860,13 @@ button.manage-row {
 
 .manage-row em,
 .manage-row b {
+  overflow: hidden;
   color: var(--text-secondary);
   font-size: 12px;
   font-style: normal;
   font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cmd.manage .manage-row em,

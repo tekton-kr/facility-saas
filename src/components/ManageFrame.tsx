@@ -17,7 +17,7 @@ export function ManageFrame({
     <div className={dark ? 'cmd manage' : 'manage'}>
       <header className="cmd-head">
         <div>
-          <p>{kicker}</p>
+          {kicker ? <p>{kicker}</p> : null}
           <h1>{title}</h1>
         </div>
       </header>

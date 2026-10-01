@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ManageFrame } from '../components/ManageFrame.tsx'
 import { WorkQueue } from '../components/WorkQueue.tsx'
-import { getSite } from '../lib/catalog.ts'
 import {
   addWorkProof,
   advanceWork,
@@ -38,9 +37,8 @@ export function WorkPage() {
   }
 
   if (!work) {
-    const place = siteId ? (getSite(siteId)?.name ?? '이 현장') : '전체 현장'
     return (
-      <ManageFrame kicker={place} title="작업 내역">
+      <ManageFrame kicker="" title="작업 내역">
         <p className="manage-note">열린 작업과 끝난 이력을 같이 봅니다.</p>
         <section className="manage-card">
           <WorkQueue siteId={siteId} />

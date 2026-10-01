@@ -156,7 +156,7 @@ export function DomainDesk({ site, desk }: { site?: SiteDef; desk: DeskId }) {
     <div className="cmd desk">
       <header className="cmd-head">
         <div>
-          <p>{site?.name ?? '대시보드'}</p>
+          <p>{site?.name ?? '현장'}</p>
           <h1>{copy.title}</h1>
         </div>
         <p>{site?.location || '이 건물'} · {copy.lead}</p>

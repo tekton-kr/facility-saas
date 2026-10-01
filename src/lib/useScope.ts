@@ -31,7 +31,7 @@ function parseRole(value: string | null): Role {
   return value === 'exec' ? 'exec' : 'ops'
 }
 
-const VIEWS = ['peak', 'eui', 'pr', 'gaps', 'compare', 'history', 'plan', 'cameras', 'connectors', 'sites', 'roles', 'licenses', 'unknown'] as const
+const VIEWS = ['peak', 'eui', 'pr', 'gaps', 'compare', 'history', 'plan', 'cameras', 'connectors', 'sites', 'roles', 'licenses', 'unknown', 'flow'] as const
 type ScreenView = (typeof VIEWS)[number] | ''
 
 function parseView(value: string | null): ScreenView {

@@ -14,7 +14,7 @@ export function ContractPage() {
   if (!site) {
     const sites = visibleSites()
     return (
-      <ManageFrame kicker="전체 현장" title="유지보수">
+      <ManageFrame kicker="" title="유지보수">
         <p className="manage-note">건물을 고르면 그 현장의 유지보수 계약이 열립니다.</p>
         <section className="manage-card">
           {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
@@ -42,7 +42,7 @@ export function ContractPage() {
   const vendor = getVendor(contract?.vendorId)
 
   return (
-    <ManageFrame kicker={site.name} title="유지보수">
+    <ManageFrame kicker="" title="유지보수">
       <p className="manage-note">{site.location || '위치 미등록'}</p>
       {!contract ? (
         <div className="empty">이 건물에 등록된 유지보수 계약이 없습니다.</div>

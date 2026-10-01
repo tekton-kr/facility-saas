@@ -23,7 +23,7 @@ export function SiteCommand({ site }: { site: SiteDef }) {
           <h1>설비</h1>
         </div>
         <p>
-          {site.name}의 사진, 도면, 주기, 일정입니다. 지도는 상황판에 있습니다.
+          {site.name}의 사진, 도면, 주기, 일정입니다. 지도는 대시보드에 있습니다.
           {' · '}
           <SampleTag />
           표시는 아직 수신되지 않은 기록입니다.

@@ -18,7 +18,7 @@ export function AppShell() {
   const [treeOpen, setTreeOpen] = useState(false)
   const [rail, setRail] = useState<RailMode>('closed')
   const [theme, setTheme] = useState<ThemeId>(readTheme)
-  const light = theme === 'day' || theme === 'sky' || theme === 'sand' || theme === 'mint'
+  const light = theme === 'sky' || theme === 'sand' || theme === 'mint'
 
   useEffect(() => {
     function syncTheme() {
@@ -60,7 +60,7 @@ export function AppShell() {
           <BrandMark />
           <span>
             <span className="brand-name">T-ARCH</span>
-            <span className="brand-sub">운영·유지보수</span>
+            <span className="brand-sub">시설관리플랫폼</span>
           </span>
         </Link>
         <BackButton />

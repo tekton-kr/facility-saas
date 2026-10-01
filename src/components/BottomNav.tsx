@@ -11,8 +11,8 @@ export function BottomNav() {
   const siteApp = (app: string) => duty ? `/apps/${app}/sites/${duty}${search}` : `/apps/${app}${search}`
   const items = owner
     ? [
-        { id: 'wall', label: '상황판', to: `/apps/events${search}` },
-        { id: 'board', label: '대시보드', to: duty ? `/apps/events/sites/${duty}${search}` : `/apps/events${search}` },
+        { id: 'wall', label: '대시보드', to: `/apps/events${search}` },
+        { id: 'board', label: '현장', to: duty ? `/apps/events/sites/${duty}${search}` : `/apps/events${search}` },
         { id: 'inspect', label: '점검', to: duty ? `/sites/${duty}/inspections${search}` : `/inspections${search}` },
         { id: 'schedule', label: '방문', to: duty ? `/sites/${duty}/schedule${search}` : `/schedule${search}` },
         { id: 'contract', label: '유지보수', to: duty ? `/sites/${duty}/contract${search}` : `/contract${search}` },

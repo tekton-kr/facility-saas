@@ -53,16 +53,19 @@ function situationPath(pathname: string): boolean {
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
-  const { app, search, siteId, role, command } = useScope()
+  const { app, search, siteId, role, command, view } = useScope()
   const { pathname } = useLocation()
   const owner = role === 'exec' || command
   const wall = owner && situationPath(pathname)
   const currentId = siteId || dutySiteId(app)
-  const wallTo = `/apps/events${search}`
-  const boardTo = currentId ? `/apps/${app}/sites/${currentId}${search}` : wallTo
-  const record = (path: string) => siteId ? `/sites/${siteId}/${path}${search}` : `/${path}${search}`
-  const serviceTo = (next: AppId) => currentId ? `/apps/${next}/sites/${currentId}${search}` : `/apps/${next}${search}`
-  const pendingTo = (id: string) => currentId ? `/sites/${currentId}/domains/${id}${search}` : `/domains/${id}${search}`
+  const bareSearch = search.replace(/(^\?|&)view=[^&]*/g, '').replace(/^\?&/, '?').replace(/\?$/, '')
+  const wallTo = `/apps/events${bareSearch}`
+  const boardTo = currentId ? `/apps/${app}/sites/${currentId}${bareSearch}` : wallTo
+  const record = (path: string) => siteId ? `/sites/${siteId}/${path}${bareSearch}` : `/${path}${bareSearch}`
+  const flowSearch = bareSearch ? `${bareSearch}&view=flow` : '?view=flow'
+  const flowTo = currentId ? `/apps/events/sites/${currentId}${flowSearch}` : wallTo
+  const serviceTo = (next: AppId) => currentId ? `/apps/${next}/sites/${currentId}${bareSearch}` : `/apps/${next}${bareSearch}`
+  const pendingTo = (id: string) => currentId ? `/sites/${currentId}/domains/${id}${bareSearch}` : `/domains/${id}${bareSearch}`
 
   return (
     <aside className={`tree${open ? ' is-open' : ''}`}>
@@ -74,7 +77,7 @@ export function SiteTree({ open, onNavigate }: Props) {
             className={`tree-mode${wall ? ' is-on' : ''}`}
             onClick={onNavigate}
           >
-            상황판
+            대시보드
           </NavLink>
         ) : null}
         {currentId ? (
@@ -83,10 +86,10 @@ export function SiteTree({ open, onNavigate }: Props) {
             className={`tree-mode${wall ? '' : ' is-on'}`}
             onClick={onNavigate}
           >
-            대시보드
+            현장
           </NavLink>
         ) : (
-          <span className="tree-mode is-disabled">대시보드</span>
+          <span className="tree-mode is-disabled">현장</span>
         )}
       </div>
       <nav className="tree-nav" aria-label="메뉴">
@@ -117,20 +120,19 @@ export function SiteTree({ open, onNavigate }: Props) {
         ) : (
           <>
             <NavLink
-              to={currentId ? `/apps/events/sites/${currentId}${search}` : boardTo}
-              end
-              className={({ isActive }) => `tree-link is-feature${isActive ? ' is-active' : ''}`}
+              to={flowTo}
+              className={`tree-link is-feature${view === 'flow' ? ' is-active' : ''}`}
               onClick={onNavigate}
             >
               <Mark id="overview" />
               종합관제
             </NavLink>
-            <div className="tree-head">대시보드</div>
+            <div className="tree-head">관제</div>
             {BOARD_APPS.map((item) => (
               <NavLink
                 key={item.id}
                 to={serviceTo(item.id)}
-                className={({ isActive }) => `tree-link${isActive && !(item.id === 'events' && pathname === `/apps/events/sites/${currentId}`) ? ' is-active' : ''}`}
+                className={({ isActive }) => `tree-link${(item.id === 'events' ? pathname === `/apps/events/sites/${currentId}` && view !== 'flow' : isActive) ? ' is-active' : ''}`}
                 onClick={onNavigate}
               >
                 <Mark id={item.id === 'events' ? 'control' : item.id === 'power' ? 'power' : 'meter'} />
@@ -145,7 +147,7 @@ export function SiteTree({ open, onNavigate }: Props) {
             ))}
             <NavLink to={serviceTo('ev')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="ev" />전기차</NavLink>
             <NavLink to={serviceTo('parking')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="park" />주차</NavLink>
-            <div className="tree-head">현장</div>
+            <div className="tree-head">근무</div>
             <NavLink to={record('roster')} className="tree-link" onClick={onNavigate}><Mark id="roster" />근무표</NavLink>
             <NavLink to={record('work')} className="tree-link" onClick={onNavigate}><Mark id="work" />작업 내역</NavLink>
             <div className="tree-head">설정</div>
@@ -154,9 +156,22 @@ export function SiteTree({ open, onNavigate }: Props) {
         )}
       </nav>
       <footer className="tree-foot">
-        <NavLink className="tree-guide" to="/guide" onClick={onNavigate}>
-          이용방법
-        </NavLink>
+        <p className="tree-contact">
+          <span>문의</span>
+          <a href="mailto:rok@tekton.co.kr">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16v10H4V7Z" />
+              <path d="m4 7 8 6 8-6" />
+            </svg>
+            rok@tekton.co.kr
+          </a>
+          <a href="tel:031-000-0000">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 4h3l1 4-2 1a12 12 0 0 0 5 5l1-2 4 1v3a2 2 0 0 1-2 2A14 14 0 0 1 6 6a2 2 0 0 1 2-2Z" />
+            </svg>
+            031-000-0000
+          </a>
+        </p>
         <p className="tree-copy">© 2026 TEKTON</p>
       </footer>
     </aside>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { ManageFrame } from '../components/ManageFrame.tsx'
-import { homePath, loginAccount, personName } from '../lib/auth.ts'
+import { loginAccount, personName } from '../lib/auth.ts'
 import { getSite } from '../lib/catalog.ts'
 import { OSS_LICENSES } from '../data/licenses.ts'
 import { visibleSites } from '../lib/siteScope.ts'
@@ -40,11 +40,10 @@ export function SettingsPage() {
             <dd>{roleText(session.role, session.entry)}</dd>
           </div>
         </dl>
-        <p className="manage-note"><Link to={homePath(session)}>프로필</Link></p>
       </section>
       <section className="manage-card">
         <h2>색감</h2>
-        <p className="manage-note">고른 색은 이 브라우저에 남습니다. 남색이 기본입니다.</p>
+        <p className="manage-note">고른 색은 이 브라우저에 남습니다. 하늘이 기본입니다.</p>
         <div className="theme-picker" role="group" aria-label="색감">
           {THEMES.map((item) => (
             <button
@@ -68,13 +67,12 @@ export function SettingsPage() {
         {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
           <div className="manage-list">
             {sites.map((site) => (
-              <Link key={site.id} className="manage-row" to={`/apps/events/sites/${site.id}`}>
+              <div key={site.id} className="manage-row">
                 <span>
                   <strong>{site.name}</strong>
                   <em>{site.location || getSite(site.id)?.location || '위치 미등록'}</em>
                 </span>
-                <b>대시보드</b>
-              </Link>
+              </div>
             ))}
           </div>
         )}
@@ -88,18 +86,20 @@ export function SettingsPage() {
         </div>
       </section>
       <section className="manage-card">
-        <h2>오픈소스</h2>
-        <div className="manage-list">
-          {OSS_LICENSES.map((item) => (
-            <div key={item.name} className="manage-row">
-              <span>
-                <strong>{item.name}</strong>
-                <em>{item.note}</em>
-              </span>
-              <b>{item.license}</b>
-            </div>
-          ))}
-        </div>
+        <details className="oss-fold">
+          <summary>오픈소스 {OSS_LICENSES.length}</summary>
+          <div className="manage-list">
+            {OSS_LICENSES.map((item) => (
+              <div key={item.name} className="manage-row">
+                <span>
+                  <strong>{item.name}</strong>
+                  <em>{item.note}</em>
+                </span>
+                <b>{item.license}</b>
+              </div>
+            ))}
+          </div>
+        </details>
       </section>
     </ManageFrame>
   )

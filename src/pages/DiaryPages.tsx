@@ -51,7 +51,7 @@ function SiteChoices({ title, path }: { title: string; path: string }) {
   const { search } = useScope()
   const sites = visibleSites()
   return (
-    <ManageFrame kicker="전체 현장" title={title}>
+    <ManageFrame kicker="" title={title}>
       <p className="manage-note">건물을 고르면 그 현장 달력이 열립니다.</p>
       <section className="manage-card">
         {sites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
@@ -110,7 +110,7 @@ export function CalendarPage() {
   }
 
   return (
-    <ManageFrame kicker={site.name} title="일정표">
+    <ManageFrame kicker="" title="일정표">
       <p className="manage-note">날짜를 누르면 그날의 공사, 업체 방문, 끝난 작업과 근무 내용이 열립니다.</p>
       <section className="manage-card">
         <div className="cal-nav">
@@ -192,7 +192,7 @@ export function RosterPage() {
   }
 
   return (
-    <ManageFrame kicker={site.name} title="근무표">
+    <ManageFrame kicker="" title="근무표">
       <p className="manage-note">누가 그날 근무하는지입니다. 협력사 방문과 작업 내역은 여기 넣지 않습니다.</p>
       <section className="manage-card">
         <div className="cal-nav">
