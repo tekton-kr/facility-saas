@@ -9,8 +9,9 @@ import {
   DEMO_WEEK_LABELS,
   DEMO_WEEK_VALUES,
 } from '../data/ownerDemo.ts'
-import { upcomingAcross } from '../lib/maintain.ts'
+import { contractForSite, daysUntil } from '../lib/field.ts'
 import { visibleSites } from '../lib/siteScope.ts'
+import { useField } from '../lib/useField.ts'
 import { apiAlarms, kpisForScope } from '../lib/telemetry.ts'
 import { useScope } from '../lib/useScope.ts'
 import { OwnerGauge, OwnerLine, OwnerMix, OwnerWeek } from './OwnerCharts.tsx'
@@ -41,6 +42,7 @@ function dayKey(date: Date): string {
 
 export function PortfolioDashboard({ service }: { service: AppId }) {
   const { search, range } = useScope()
+  useField()
   const focus = service === 'power' || service === 'metering' || service === 'solar' ? service : 'events'
   const live = visibleSites()
   const fromApi = apiAlarms()
@@ -64,14 +66,6 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
       sample: false,
     }
   })
-  const taken = new Set(realSites.map((site) => site.id))
-  const sampleSites = DEMO_SITES.filter((site) => !taken.has(site.id)).slice(0, Math.max(0, 4 - realSites.length)).map((site) => ({
-    ...site,
-    locationSample: false,
-    positionSample: false,
-    sample: true,
-  }))
-  const sites = [...realSites, ...sampleSites]
   const attention = realSites.filter((item) => item.tone === 'warn').length
   const waiting = realSites.filter((item) => item.tone === 'wait').length
   const calm = realSites.length - attention - waiting
@@ -116,11 +110,10 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
       <header className="cmd-head">
         <div>
           <p>관리단 · 건물주</p>
-          <h1>시설관리</h1>
+          <h1>종합화면</h1>
         </div>
         <p>
           배정 건물 {realSites.length}
-          {sampleSites.length > 0 ? ` · 예시 건물 ${sampleSites.length}` : ''}
           {' · '}
           <span className="sample-tag">예시</span>
           표시는 아직 수신되지 않은 값입니다.
@@ -158,55 +151,63 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
               { name: '이상 없음', value: calm, color: '#34d399' },
             ]}
           />
-          <ul>
-            {sites.map((site) => (
-              <li key={site.id} className={site.sample ? 'is-sample' : undefined}>
-                <Link to={site.sample ? `/apps/events${search}` : `/apps/events/sites/${site.id}${search}`}>
-                  <i className={`is-${site.tone}`} />
-                  <span>
-                    <strong>{site.name}{site.sample ? <SampleTag /> : null}</strong>
-                    <em>
-                      {site.location}
-                      {site.sample ? '' : site.locationSample ? ' · 위치 예시' : ''}
-                    </em>
-                  </span>
-                  <b>{site.sample ? '예시' : site.badge}</b>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {realSites.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
+            <ul>
+              {realSites.map((site) => (
+                <li key={site.id}>
+                  <Link to={`/apps/events/sites/${site.id}${search}`}>
+                    <i className={`is-${site.tone}`} />
+                    <span>
+                      <strong>{site.name}</strong>
+                      <em>
+                        {site.location}
+                        {site.locationSample ? ' · 위치 예시' : ''}
+                      </em>
+                    </span>
+                    <b>{site.badge}</b>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
 
         <section className="cmd-map-wrap">
           <SiteMap
-            sites={sites.map((site) => ({
+            sites={realSites.map((site) => ({
               id: site.id,
               name: site.name,
               location: site.location,
               lat: site.lat,
               lng: site.lng,
-              to: site.sample ? `/apps/events${search}` : `/apps/events/sites/${site.id}${search}`,
+              to: `/apps/events/sites/${site.id}${search}`,
               attention: site.tone === 'warn',
               waiting: site.tone === 'wait',
-              sample: site.sample,
-              positionSample: !site.sample && site.positionSample,
+              sample: false,
+              positionSample: site.positionSample,
             }))}
           />
         </section>
 
-        <aside className="cmd-panel cmd-alarms is-sample">
-          <h2>다가오는 일<SampleTag /></h2>
-          <ul>
-            {upcomingAcross().map((item) => (
-              <li key={item.id}>
-                <Link to={`${item.to}${search}`}>
-                  <strong>{item.title}<SampleTag /></strong>
-                  <em>{item.siteName} · {item.kind}</em>
-                  <time>{item.when}</time>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <aside className="cmd-panel cmd-alarms">
+          <h2>유지보수</h2>
+          {live.length === 0 ? <div className="empty">배정된 건물이 없습니다.</div> : (
+            <ul>
+              {live.map((site) => {
+                const contract = contractForSite(site.id)
+                const left = contract ? daysUntil(contract.end) : null
+                return (
+                  <li key={site.id}>
+                    <Link to={`/sites/${site.id}/contract${search}`}>
+                      <strong>{site.name}</strong>
+                      <em>{contract ? contract.end : '계약 없음'}</em>
+                      {left == null ? null : <b>{left < 0 ? '만료' : `${left}일`}</b>}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </aside>
 
         <section className={`cmd-panel cmd-week${weekSample ? ' is-sample' : ''}`}>

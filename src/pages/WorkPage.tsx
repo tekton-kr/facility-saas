@@ -6,12 +6,14 @@ import { getSite } from '../lib/catalog.ts'
 import {
   addWorkProof,
   advanceWork,
+  contractForSite,
   getVendor,
   isSlaOpen,
   nextWorkStatus,
   setWorkNote,
   siteLabel,
   workById,
+  workInContractPeriod,
 } from '../lib/field.ts'
 import { formatDateTime, WORK_KIND_LABEL, WORK_STATUS_LABEL } from '../lib/format.ts'
 import { useCompact } from '../lib/media.ts'
@@ -63,6 +65,8 @@ function WorkDetail({ work }: { work: WorkOrder }) {
   const late = isSlaOpen(work)
   const next = nextWorkStatus(work.status)
   const vendor = getVendor(work.vendorId)
+  const contract = work.contractId ? contractForSite(work.siteId) : undefined
+  const inPeriod = contract && work.contractId === contract.id ? workInContractPeriod(work, contract) : false
 
   function onProof(event: FormEvent) {
     event.preventDefault()
@@ -81,6 +85,14 @@ function WorkDetail({ work }: { work: WorkOrder }) {
         {vendor ? ` · ${vendor.name}` : ''}
         {late ? ' · 기한 지남' : ''}
       </p>
+      {contract ? (
+        <p className="manage-note">
+          <Link to={`/sites/${work.siteId}/contract${search}`}>유지보수 계약</Link>
+          {inPeriod ? ' · 계약 기간 안의 수행 증거' : ' · 계약 기간 밖'}
+        </p>
+      ) : (
+        <p className="manage-note">이 작업은 유지보수 계약에 연결되어 있지 않습니다.</p>
+      )}
 
       <ol className="work-steps">
         {STATUSES.map((status) => (

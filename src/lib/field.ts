@@ -9,6 +9,7 @@ import {
 import type {
   Alarm,
   Contract,
+  ContractLine,
   DirectoryAccount,
   PackageStatus,
   RenovationPackage,
@@ -94,6 +95,131 @@ export function getVendor(id: string | undefined): Vendor | undefined {
 export function contractForSite(siteId: string | undefined): Contract | undefined {
   if (!siteId) return undefined
   return state.contracts.find((item) => item.siteId === siteId)
+}
+
+export const CONTRACT_LINE_LABEL: Record<ContractLine, string> = {
+  control: '자동제어',
+  power: '전력',
+  submeter: '설비 전력량계',
+}
+
+const LINE_FROM_DOMAIN: Partial<Record<SystemDomain, ContractLine>> = {
+  hvac: 'control',
+  events: 'control',
+  power: 'power',
+}
+
+export function contractLines(contract: Contract): ContractLine[] {
+  if (contract.lines?.length) {
+    return contract.lines.filter((line) => line === 'control' || line === 'power' || line === 'submeter')
+  }
+  const found = new Set<ContractLine>()
+  for (const domain of contract.scope) {
+    const line = LINE_FROM_DOMAIN[domain]
+    if (line) found.add(line)
+  }
+  return (['control', 'power', 'submeter'] as const).filter((line) => found.has(line))
+}
+
+export function contractCovers(contract: Contract | undefined, line: ContractLine): boolean {
+  return contract ? contractLines(contract).includes(line) : false
+}
+
+function periodStart(contract: Contract): number {
+  return new Date(`${contract.start}T00:00:00+09:00`).getTime()
+}
+
+function periodEnd(contract: Contract): number {
+  return new Date(`${contract.end}T23:59:59+09:00`).getTime()
+}
+
+export function workInContractPeriod(work: WorkOrder, contract: Contract): boolean {
+  if (work.contractId !== contract.id) return false
+  const at = new Date(work.createdAt).getTime()
+  return at >= periodStart(contract) && at <= periodEnd(contract)
+}
+
+export function contractEvidence(contract: Contract): WorkOrder[] {
+  return worksForScope(contract.siteId).filter((work) => workInContractPeriod(work, contract))
+}
+
+export function alarmEquipmentName(alarm: Alarm): string {
+  const site = getSite(alarm.siteId)
+  const system = site?.systems.find((item) => item.id === alarm.systemId)
+  const equipment = system?.equipment.find((item) => item.id === alarm.equipmentId)
+  return equipment?.name || system?.name || '설비 없음'
+}
+
+export function alarmContractFit(alarm: Alarm): { inScope: boolean, line: ContractLine | null, note: string } {
+  const contract = contractForSite(alarm.siteId)
+  if (!contract) return { inScope: false, line: null, note: '이 현장에 유지보수 계약이 없습니다.' }
+  const site = getSite(alarm.siteId)
+  const system = site?.systems.find((item) => item.id === alarm.systemId)
+  const line = system ? LINE_FROM_DOMAIN[system.domain] ?? null : null
+  if (!line || !contractLines(contract).includes(line)) {
+    return { inScope: false, line, note: '이 알람은 계약 범위 밖입니다.' }
+  }
+  return { inScope: true, line, note: CONTRACT_LINE_LABEL[line] }
+}
+
+export function openWorkFromAlarm(alarm: Alarm): WorkOrder | undefined {
+  const existing = workByAlarm(alarm.id)
+  if (existing) return existing
+  const fit = alarmContractFit(alarm)
+  const contract = contractForSite(alarm.siteId)
+  if (!fit.inScope || !contract) return undefined
+  const minutes = alarm.severity === 'critical' ? contract.slaCriticalMin : contract.slaWarningMin
+  const work: WorkOrder = {
+    id: `wo-${Date.now().toString(36)}`,
+    siteId: alarm.siteId,
+    alarmId: alarm.id,
+    contractId: contract.id,
+    vendorId: contract.vendorId,
+    kind: 'dispatch',
+    title: alarm.title,
+    status: 'received',
+    slaDueAt: new Date(Date.now() + minutes * 60_000).toISOString(),
+    createdAt: new Date().toISOString(),
+    systemId: alarm.systemId,
+    equipmentId: alarm.equipmentId,
+    pointId: alarm.pointId,
+    note: '',
+    proofs: [],
+    arrivedAt: null,
+  }
+  write({ ...state, works: [work, ...state.works] })
+  return work
+}
+
+export function openMeterWork(input: { siteId: string, systemId: string, equipmentId: string, equipmentName: string }): WorkOrder | undefined {
+  const contract = contractForSite(input.siteId)
+  if (!contract || !contractCovers(contract, 'submeter')) return undefined
+  const title = `${input.equipmentName} 전력량`
+  const existing = state.works.find((item) => (
+    item.contractId === contract.id
+    && item.equipmentId === input.equipmentId
+    && item.title === title
+    && item.status !== 'done'
+  ))
+  if (existing) return existing
+  const work: WorkOrder = {
+    id: `wo-${Date.now().toString(36)}`,
+    siteId: input.siteId,
+    contractId: contract.id,
+    vendorId: contract.vendorId,
+    kind: 'dispatch',
+    title,
+    status: 'received',
+    slaDueAt: new Date(Date.now() + contract.slaWarningMin * 60_000).toISOString(),
+    createdAt: new Date().toISOString(),
+    systemId: input.systemId,
+    equipmentId: input.equipmentId,
+    note: '설비 전력량계가 평소보다 높습니다.',
+    proofs: [],
+    arrivedAt: null,
+  }
+  write({ ...state, works: [work, ...state.works] })
+  return work
 }
 
 export function worksForScope(siteId?: string): WorkOrder[] {

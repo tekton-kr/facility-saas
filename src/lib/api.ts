@@ -253,35 +253,9 @@ export type Notice = {
   at: string
 }
 
-function readNotices(body: unknown): Notice[] {
-  const bag = asRecord(body)
-  const list = Array.isArray(body)
-    ? body
-    : bag
-      ? (['notices', 'items', 'data', 'rows', 'list', 'result'] as const).flatMap((key) => Array.isArray(bag[key]) ? bag[key] as unknown[] : [])
-      : []
-  return list.flatMap((item, index) => {
-    const row = asRecord(item)
-    if (!row) return []
-    const title = textOf(row, ['title', 'subject', 'name'])
-    if (!title) return []
-    return [{
-      id: textOf(row, ['id', 'noticeId', 'notice_id']) || `notice-${index}`,
-      title,
-      body: textOf(row, ['body', 'content', 'message', 'text']),
-      at: textOf(row, ['at', 'createdAt', 'created_at', 'publishedAt', 'published_at']),
-    }]
-  })
-}
-
 export async function fetchNotices(): Promise<Notice[]> {
-  const response = await fetch(`${AUTH_ROOT}/notices`, {
-    method: 'GET',
-    headers: headers(),
-  })
-  if (response.status === 404) return []
-  const body = await parse<unknown>(response)
-  return readNotices(body)
+  // saas-api 에 GET /api/notices 가 없다. 없는 주소를 치면 브라우저가 404를 콘솔에 남긴다.
+  return []
 }
 
 export async function fetchSites(): Promise<SiteDef[]> {

@@ -217,6 +217,8 @@ export type StatutoryItem = {
   status: StatutoryStatus
 }
 
+export type ContractLine = 'control' | 'power' | 'submeter'
+
 export type Contract = {
   id: string
   siteId: string
@@ -224,6 +226,7 @@ export type Contract = {
   start: string
   end: string
   scope: SystemDomain[]
+  lines?: ContractLine[]
   slaCriticalMin: number
   slaWarningMin: number
   statutory: StatutoryItem[]

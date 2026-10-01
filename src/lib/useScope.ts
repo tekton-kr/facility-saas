@@ -139,20 +139,15 @@ export function useScope() {
 
   function goSite(nextSiteId: string) {
     const path = location.pathname
-    if (path.startsWith('/sites/') && path.endsWith('/contract')) {
-      navigate(`/sites/${nextSiteId}/contract${search}`)
+    const record = ['inspections', 'cycles', 'photos', 'drawings', 'schedule', 'calendar', 'roster', 'meters', 'contract', 'work'].find((name) => (
+      path === `/${name}` || path.endsWith(`/${name}`)
+    ))
+    if (record) {
+      navigate(`/sites/${nextSiteId}/${record}${search}`)
       return
     }
-    if (path.startsWith('/sites/') && path.endsWith('/work')) {
+    if (path.startsWith('/work/')) {
       navigate(`/sites/${nextSiteId}/work${search}`)
-      return
-    }
-    if (path === '/work' || path.startsWith('/work/')) {
-      navigate(`/sites/${nextSiteId}/work${search}`)
-      return
-    }
-    if (path.startsWith('/packages')) {
-      navigate(`/packages${search}`)
       return
     }
     navigate(`/apps/${app}/sites/${nextSiteId}${search}`)

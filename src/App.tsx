@@ -22,7 +22,10 @@ import { ScreenIndexPage } from './pages/ScreenIndexPage.tsx'
 import { ScreenRedirect } from './pages/ScreenRedirect.tsx'
 import { ContractPage } from './pages/ContractPage.tsx'
 import { InspectionsPage, CyclesPage, PhotosPage, DrawingsPage, SchedulePage } from './pages/MaintainPages.tsx'
+import { MetersPage } from './pages/MetersPage.tsx'
+import { CalendarPage, RosterPage } from './pages/DiaryPages.tsx'
 import { PackagesPage } from './pages/PackagesPage.tsx'
+import { PendingDomainPage } from './pages/PendingDomainPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
 import { SystemPage } from './pages/SystemPage.tsx'
@@ -70,6 +73,14 @@ export default function App() {
               <Route path="/sites/:siteId/drawings" element={<DrawingsPage />} />
               <Route path="/schedule" element={<SchedulePage />} />
               <Route path="/sites/:siteId/schedule" element={<SchedulePage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/sites/:siteId/calendar" element={<CalendarPage />} />
+              <Route path="/roster" element={<RosterPage />} />
+              <Route path="/sites/:siteId/roster" element={<RosterPage />} />
+              <Route path="/meters" element={<MetersPage />} />
+              <Route path="/sites/:siteId/meters" element={<MetersPage />} />
+              <Route path="/domains/:domain" element={<PendingDomainPage />} />
+              <Route path="/sites/:siteId/domains/:domain" element={<PendingDomainPage />} />
               <Route path="/contract" element={<ContractPage />} />
               <Route path="/work" element={<WorkPage />} />
               <Route path="/work/:workId" element={<WorkPage />} />

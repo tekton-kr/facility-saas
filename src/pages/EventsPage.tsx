@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { AlarmCards } from '../components/AlarmCards.tsx'
 import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
-import { SiteCommand } from '../components/SiteCommand.tsx'
+import { DomainDesk } from '../components/DomainDesk.tsx'
 import { DataTable } from '../components/DataTable.tsx'
 import { EventContext } from '../components/EventContext.tsx'
 import { EventFilters } from '../components/EventFilters.tsx'
@@ -15,6 +15,7 @@ import { formatDateTime, formatSource, KIND_ALARM_LABEL, KIND_LABEL, SEVERITY_LA
 import { useCompact } from '../lib/media.ts'
 import { featuredAlarm } from '../lib/portfolio.ts'
 import { alarmInRange, alarmsForScope } from '../lib/telemetry.ts'
+import { dutySiteId } from '../lib/roleHome.ts'
 import { useScope } from '../lib/useScope.ts'
 import type { Alarm } from '../types/domain.ts'
 import { EventFocus } from './EventFocus.tsx'
@@ -86,11 +87,15 @@ export function EventsPage() {
   }, [siteId])
 
   if (!view && !siteId) {
+    if (role !== 'exec' && !command) {
+      const duty = dutySiteId('events')
+      if (duty) return <Navigate to={`/apps/events/sites/${duty}${search}`} replace />
+    }
     return <PortfolioDashboard service="events" />
   }
 
   if (!view && scopedSite) {
-    return <SiteCommand site={scopedSite} />
+    return <DomainDesk site={scopedSite} desk="events" />
   }
 
   if (role === 'exec') {

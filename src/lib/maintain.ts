@@ -102,6 +102,10 @@ export function drawingsFor(siteId?: string): Drawing[] {
   ])
 }
 
+export function visitsOn(siteId: string | undefined, day: string): Visit[] {
+  return visitsFor(siteId).filter((item) => item.date === day)
+}
+
 export function visitsFor(siteId?: string): Visit[] {
   return sites(siteId).flatMap((site) => [
     { id: `${site.id}-vs-1`, siteId: site.id, title: '필터 세척', kind: '방문' as const, vendor: '중부공조', date: '2026-10-09', equipment: '공조기', sample: true as const },

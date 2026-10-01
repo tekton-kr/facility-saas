@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { BrandMark } from './BrandMark.tsx'
-import { AlarmRail } from './AlarmRail.tsx'
+import { AlarmRail, type RailMode } from './AlarmRail.tsx'
 import { BottomNav } from './BottomNav.tsx'
 import { CommandPalette } from './CommandPalette.tsx'
-import { FilterBar } from './FilterBar.tsx'
+import { FilterBar, BackButton } from './FilterBar.tsx'
 import { SiteTree } from './SiteTree.tsx'
 import { useCompact } from '../lib/media.ts'
 import { useField } from '../lib/useField.ts'
@@ -16,7 +16,7 @@ export function AppShell() {
   useField()
   const compact = useCompact()
   const [treeOpen, setTreeOpen] = useState(false)
-  const [rail, setRail] = useState<'closed' | 'alarms' | 'notices'>('closed')
+  const [rail, setRail] = useState<RailMode>('closed')
   const [theme, setTheme] = useState<ThemeId>(readTheme)
   const light = theme === 'day' || theme === 'sky' || theme === 'sand' || theme === 'mint'
 
@@ -49,13 +49,16 @@ export function AppShell() {
 
   return (
     <div className={`shell theme-${theme}${light ? ' is-light' : ''}${rail === 'closed' ? ' is-alarm-collapsed' : ''}${compact ? ' is-compact' : ''}`}>
-      <Link className="brand" to={`/apps/events${search}`} title="T-ARCH · 시설을 돌보다">
-        <BrandMark />
-        <span>
-          <span className="brand-name">T-ARCH</span>
-          <span className="brand-sub">운영·유지보수</span>
-        </span>
-      </Link>
+      <div className="brand">
+        <Link className="brand-lockup" to={`/apps/events${search}`} title="T-ARCH · 시설을 돌보다">
+          <BrandMark />
+          <span>
+            <span className="brand-name">T-ARCH</span>
+            <span className="brand-sub">운영·유지보수</span>
+          </span>
+        </Link>
+        <BackButton />
+      </div>
       <FilterBar
         compact={compact}
         onToggleTree={() => {

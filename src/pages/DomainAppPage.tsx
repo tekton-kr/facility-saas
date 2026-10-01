@@ -1,26 +1,36 @@
-import { CollectionPending } from '../components/CollectionPending.tsx'
+import { Navigate } from 'react-router-dom'
+import { DomainDesk, type DeskId } from '../components/DomainDesk.tsx'
 import { PortfolioDashboard } from '../components/PortfolioDashboard.tsx'
-import { SiteCommand } from '../components/SiteCommand.tsx'
 import { getSite } from '../lib/catalog.ts'
-import { APP_LABEL } from '../lib/format.ts'
+import { dutySiteId } from '../lib/roleHome.ts'
 import { useScope } from '../lib/useScope.ts'
 import { FocusView } from './FocusView.tsx'
 
+const DESK: Partial<Record<string, DeskId>> = {
+  power: 'power',
+  metering: 'metering',
+  parking: 'parking',
+  ev: 'ev',
+}
+
 export function DomainAppPage() {
-  const { app, siteId, view } = useScope()
+  const { app, siteId, view, role, command, search } = useScope()
   const site = getSite(siteId)
+  const desk = DESK[app]
 
   if (view === 'peak' || view === 'eui' || view === 'pr' || view === 'gaps' || view === 'compare') {
     return <FocusView />
   }
 
   if (!siteId) {
+    if (role !== 'exec' && !command) {
+      const duty = dutySiteId(app)
+      if (duty) return <Navigate to={`/apps/${app}/sites/${duty}${search}`} replace />
+    }
     return <PortfolioDashboard service={app} />
   }
 
-  if (site) {
-    return <SiteCommand site={site} />
-  }
+  if (site && desk) return <DomainDesk site={site} desk={desk} />
 
-  return <CollectionPending title={`${APP_LABEL[app]} · 현장을 찾지 못했습니다`} />
+  return <PortfolioDashboard service={app} />
 }
