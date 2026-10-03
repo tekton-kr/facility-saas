@@ -174,18 +174,23 @@ export function PortfolioDashboard({ service }: { service: AppId }) {
 
         <section className="cmd-map-wrap">
           <SiteMap
-            sites={realSites.map((site) => ({
-              id: site.id,
-              name: site.name,
-              location: site.location,
-              lat: site.lat,
-              lng: site.lng,
-              to: `/apps/events/sites/${site.id}${search}`,
-              attention: site.tone === 'warn',
-              waiting: site.tone === 'wait',
-              sample: false,
-              positionSample: site.positionSample,
-            }))}
+            sites={realSites.filter((site) => site.tone === 'warn').map((site) => {
+              const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+              params.set('view', 'flow')
+              const query = params.toString()
+              return {
+                id: site.id,
+                name: site.name,
+                location: site.location,
+                lat: site.lat,
+                lng: site.lng,
+                to: `/apps/events/sites/${site.id}${query ? `?${query}` : ''}`,
+                attention: true,
+                waiting: false,
+                sample: false,
+                positionSample: site.positionSample,
+              }
+            })}
           />
         </section>
 

@@ -139,7 +139,7 @@ export function useScope() {
 
   function goSite(nextSiteId: string) {
     const path = location.pathname
-    const record = ['inspections', 'diagnosis', 'cycles', 'photos', 'drawings', 'schedule', 'calendar', 'roster', 'staff', 'meters', 'contract', 'work', 'assets'].find((name) => (
+    const record = ['inspections', 'diagnosis', 'cycles', 'photos', 'drawings', 'schedule', 'calendar', 'roster', 'staff', 'meters', 'contract', 'work', 'assets', 'sheets'].find((name) => (
       path === `/${name}` || path.endsWith(`/${name}`)
     ))
     if (record) {

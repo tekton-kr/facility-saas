@@ -48,16 +48,14 @@ function headers(extra?: HeadersInit): HeadersInit {
   }
 }
 
-const API_HINT = '개발 서버와 배포가 /api 를 https://saas-api.tekton.co.kr 로 넘기는지 확인하십시오.'
-
 async function parse<T>(response: Response): Promise<T> {
   const text = await response.text()
   const contentType = response.headers.get('Content-Type') ?? ''
 
   // 프록시가 없으면 /api 요청이 SPA 폴백에 걸려 index.html이 돌아온다.
-  // 그대로 JSON.parse 하면 "Unexpected token '<'" 만 남아 원인을 못 찾는다.
+  // 주소와 상태 코드는 화면에 두지 않는다.
   if (text && !contentType.includes('json')) {
-    throw new Error(`조회 API가 JSON이 아닌 응답을 보냈습니다 (${response.status}). ${API_HINT}`)
+    throw new Error('값을 받지 못했습니다. 잠시 뒤 다시 보십시오.')
   }
 
   let body: (T & { error?: string }) | undefined
@@ -65,7 +63,7 @@ async function parse<T>(response: Response): Promise<T> {
     try {
       body = JSON.parse(text) as T & { error?: string }
     } catch {
-      throw new Error(`조회 API 응답을 읽지 못했습니다 (${response.status}). ${API_HINT}`)
+      throw new Error('값을 받지 못했습니다. 잠시 뒤 다시 보십시오.')
     }
   }
 
@@ -273,6 +271,16 @@ export async function fetchSites(): Promise<SiteDef[]> {
   const sites = readSites(body)
   if (sites.length === 0) throw new Error('배정된 현장이 없습니다.')
   return sites
+}
+
+export async function fetchSiteSensors(siteId: string): Promise<unknown> {
+  const response = await fetch(`${AUTH_ROOT}/sites/${encodeURIComponent(siteId)}/sensors`, { headers: headers() })
+  return parse<unknown>(response)
+}
+
+export async function fetchSiteDashboard(siteId: string): Promise<unknown> {
+  const response = await fetch(`${AUTH_ROOT}/dashboard?siteId=${encodeURIComponent(siteId)}`, { headers: headers() })
+  return parse<unknown>(response)
 }
 
 export async function fetchSiteReadings(siteId: string) {

@@ -57,6 +57,10 @@ function buildSiteMarker(
   mark.innerHTML = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 28V14l8-7 8 7v14H8z"/><path d="M13 28v-7h6v7"/><rect x="11" y="16" width="3.2" height="3.2"/><rect x="17.8" y="16" width="3.2" height="3.2" class="is-lit"/></svg>'
   mark.addEventListener('click', (event) => {
     event.stopPropagation()
+    if (pin.to) {
+      navigate(pin.to)
+      return
+    }
     cards.forEach((item) => {
       item.style.zIndex = '3'
     })
@@ -98,6 +102,11 @@ export function SiteMap({ sites }: Props) {
         })
         relayout = () => map.relayout()
         const current = pins.current
+        if (current.length === 0) {
+          setNote('이상 현장이 없습니다.')
+          map.relayout()
+          return
+        }
         const placed: Array<{ pin: MapPin; lat: number; lng: number }> = []
         const cards: HTMLElement[] = []
         for (const pin of current) {

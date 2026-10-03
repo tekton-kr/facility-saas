@@ -34,10 +34,10 @@ function headerCopy(pathname: string, siteName: string | undefined, app: AppId |
   if (!siteName && /^\/apps\/[^/]+$/.test(pathname)) {
     return { kicker: '대시보드', title: '배정 현황' }
   }
-  if (/\/(roster|work|staff)(\/|$)/.test(pathname) || pathname.includes('/domains/')) {
+  if (/\/(roster|work|staff|sheets)(\/|$)/.test(pathname) || pathname.includes('/domains/')) {
     return { kicker: '현장', title: place }
   }
-  if (/\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|calendar|packages|assets)(\/|$)/.test(pathname)) {
+  if (/\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|calendar|packages|assets|sheets)(\/|$)/.test(pathname)) {
     return { kicker: '대시보드', title: place }
   }
   return {

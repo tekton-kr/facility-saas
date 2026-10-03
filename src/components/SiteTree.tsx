@@ -59,7 +59,7 @@ function situationPath(pathname: string): boolean {
   if (pathname.startsWith('/settings')) return true
   if (pathname.startsWith('/reports')) return true
   if (pathname.startsWith('/assets')) return true
-  return /\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|assets)(\/|$)/.test(pathname)
+  return /\/(inspections|diagnosis|cycles|photos|drawings|meters|schedule|contract|assets|sheets)(\/|$)/.test(pathname)
 }
 
 export function SiteTree({ open, onNavigate }: Props) {
@@ -134,6 +134,7 @@ export function SiteTree({ open, onNavigate }: Props) {
             <NavLink to={record('diagnosis')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="diag" />진단</NavLink>
             <NavLink to={record('cycles')} className="tree-link" onClick={onNavigate}><Mark id="cycle" />세척·교체 주기</NavLink>
             <NavLink to={record('photos')} className="tree-link" onClick={onNavigate}><Mark id="photo" />사진·설명</NavLink>
+            <NavLink to={record('sheets')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="photo" />사진대지</NavLink>
             <NavLink to={record('drawings')} className="tree-link" onClick={onNavigate}><Mark id="draw" />준공 도면</NavLink>
             <NavLink to={record('meters')} className="tree-link" onClick={onNavigate}><Mark id="gauge" />설비 전력량계</NavLink>
             <div className="tree-head">일정</div>
@@ -192,6 +193,7 @@ export function SiteTree({ open, onNavigate }: Props) {
             <NavLink to={record('staff')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="crew" />직원관리</NavLink>
             <NavLink to={record('roster')} className="tree-link" onClick={onNavigate}><Mark id="roster" />근무표</NavLink>
             <NavLink to={record('work')} className="tree-link" onClick={onNavigate}><Mark id="work" />작업 내역</NavLink>
+            <NavLink to={record('sheets')} className={({ isActive }) => `tree-link${isActive ? ' is-active' : ''}`} onClick={onNavigate}><Mark id="photo" />사진대지</NavLink>
             <div className="tree-head">설정</div>
             <NavLink to={`/settings${search}`} className="tree-link" onClick={onNavigate}><Mark id="gear" />설정</NavLink>
           </>

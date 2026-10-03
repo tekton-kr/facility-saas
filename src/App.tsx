@@ -26,6 +26,7 @@ import { DiagnosePage } from './pages/DiagnosePage.tsx'
 import { InspectionsPage, CyclesPage, PhotosPage, DrawingsPage, SchedulePage } from './pages/MaintainPages.tsx'
 import { MetersPage } from './pages/MetersPage.tsx'
 import { CalendarPage, RosterPage } from './pages/DiaryPages.tsx'
+import { PhotoSheetPage } from './pages/PhotoSheetPage.tsx'
 import { PackagesPage } from './pages/PackagesPage.tsx'
 import { PendingDomainPage } from './pages/PendingDomainPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
@@ -85,6 +86,8 @@ export default function App() {
               <Route path="/sites/:siteId/calendar" element={<CalendarPage />} />
               <Route path="/roster" element={<RosterPage />} />
               <Route path="/sites/:siteId/roster" element={<RosterPage />} />
+              <Route path="/sheets" element={<PhotoSheetPage />} />
+              <Route path="/sites/:siteId/sheets" element={<PhotoSheetPage />} />
               <Route path="/staff" element={<StaffPage />} />
               <Route path="/sites/:siteId/staff" element={<StaffPage />} />
               <Route path="/meters" element={<MetersPage />} />

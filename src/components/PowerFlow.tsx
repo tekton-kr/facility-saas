@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { SiteDef } from '../types/domain.ts'
 import { listPoints } from '../lib/catalog.ts'
 import { formatDateTime } from '../lib/format.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
+import { layerOf, peekSiteTags, refreshLatest, refreshSensors, type SensorLatest, type SiteSensor, type TagLayer } from '../lib/siteTags.ts'
 import { useScope } from '../lib/useScope.ts'
 
 const SONGDO_PHOTO = '/img/sample/songdo_ait_center_002_3725457f57.webp'
@@ -15,28 +16,30 @@ function buildingPhoto(site: SiteDef): string | undefined {
   return undefined
 }
 
-const SERVICES: { id: string; label: string; keys: string[]; row: 'top' | 'bottom'; path: string }[] = [
-  { id: 'events', label: '기계설비', keys: ['공조', '냉동', '펌프', '보일러', '열교환'], row: 'top', path: 'apps/events' },
-  { id: 'power', label: '전력', keys: ['수전', '전력', '전압', '전류'], row: 'top', path: 'apps/power' },
-  { id: 'light', label: '조명', keys: ['조명'], row: 'top', path: 'domains/light' },
-  { id: 'metering', label: '원격검침', keys: ['검침', '가스', '급탕', '난방', '급수'], row: 'top', path: 'apps/metering' },
-  { id: 'ehp', label: 'EHP', keys: ['ehp', '실내'], row: 'top', path: 'domains/ehp' },
-  { id: 'fire', label: '소방', keys: ['소방', '화재'], row: 'bottom', path: 'domains/fire' },
-  { id: 'elevator', label: '엘리베이터', keys: ['엘리베이터', '승강'], row: 'bottom', path: 'domains/elevator' },
-  { id: 'ev', label: '전기차충전기', keys: ['충전', 'ev'], row: 'bottom', path: 'apps/ev' },
-  { id: 'parking', label: '주차운영', keys: ['주차'], row: 'bottom', path: 'apps/parking' },
+const LAYERS: { id: TagLayer; label: string }[] = [
+  { id: 'plant', label: '기계' },
+  { id: 'power', label: '전력' },
+  { id: 'meter', label: '계량' },
+  { id: 'light', label: '조명' },
+  { id: 'fire', label: '소방' },
+]
+
+const SERVICES: { id: string; label: string; row: 'top' | 'bottom'; path: string; layer: TagLayer | 'rest' }[] = [
+  { id: 'events', label: '기계설비', row: 'top', path: 'apps/events', layer: 'plant' },
+  { id: 'power', label: '전력', row: 'top', path: 'apps/power', layer: 'power' },
+  { id: 'light', label: '조명', row: 'top', path: 'domains/light', layer: 'light' },
+  { id: 'metering', label: '원격검침', row: 'top', path: 'apps/metering', layer: 'meter' },
+  { id: 'ehp', label: 'EHP', row: 'top', path: 'domains/ehp', layer: 'plant' },
+  { id: 'fire', label: '소방', row: 'bottom', path: 'domains/fire', layer: 'fire' },
+  { id: 'elevator', label: '엘리베이터', row: 'bottom', path: 'domains/elevator', layer: 'rest' },
+  { id: 'ev', label: '전기차충전기', row: 'bottom', path: 'apps/ev', layer: 'power' },
+  { id: 'parking', label: '주차운영', row: 'bottom', path: 'apps/parking', layer: 'rest' },
 ]
 
 function formatValue(value: number): string {
   return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 }).format(value)
 }
 
-function matchedPoints(siteId: string, keys: string[]) {
-  return listPoints({ siteId }).filter((item) => {
-    const hay = `${item.system.name} ${item.equipment.name} ${item.point.name} ${item.point.tags.join(' ')}`.toLowerCase()
-    return keys.some((key) => hay.includes(key.toLowerCase()))
-  })
-}
 function deskSearch(search: string): string {
   return search.replace(/(^\?|&)view=[^&]*/g, '').replace(/^\?&/, '?').replace(/\?$/, '')
 }
@@ -63,35 +66,135 @@ function NodeIcon({ id }: { id: string }) {
   )
 }
 
-function liveText(siteId: string, keys: string[]): string {
-  const row = matchedPoints(siteId, keys).find((item) => {
-    const tel = getTelemetry(item, 'live')
-    return tel.current != null && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
-  })
-  if (!row) return '수신 없음'
-  const tel = getTelemetry(row, 'live')
-  return `${formatValue(tel.current as number)}${row.point.unit ? ` ${row.point.unit}` : ''}`
+function SelectedTags({
+  label,
+  href,
+  tags,
+  latest,
+  rest,
+}: {
+  label: string
+  href: string
+  tags: SiteSensor[]
+  latest: Map<string, SensorLatest>
+  rest: boolean
+}) {
+  const received = tags.filter((item) => latest.get(item.id)?.value != null)
+  const missing = tags.length - received.length
+  return (
+    <>
+      <header>
+        <h2>{label}</h2>
+        <Link to={href}>이 화면으로</Link>
+      </header>
+      {rest ? <p>이 시설은 태그 구분에 없습니다.</p> : null}
+      {!rest && tags.length === 0 ? <p>이 층에 받은 태그가 없습니다.</p> : null}
+      {tags.length > 0 ? <p>{received.length} 수신 · {missing} 수신 없음</p> : null}
+      <ul>
+        {[...received, ...tags.filter((item) => latest.get(item.id)?.value == null)].map((item) => {
+          const reading = latest.get(item.id)
+          const value = reading?.value
+          return (
+            <li key={item.id}>
+              <strong>{item.name}</strong>
+              <span>
+                {value == null ? '수신 없음' : `${formatValue(value)}${item.unit ? ` ${item.unit}` : ''}`}
+                {value != null ? <em>{formatDateTime(reading?.at ?? null)}</em> : null}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </>
+  )
 }
 
-function Node({ siteId, id, label, keys, href }: { siteId: string; id: string; label: string; keys: string[]; href: string }): ReactNode {
-  const value = liveText(siteId, keys)
+function Node({
+  id,
+  label,
+  value,
+  count,
+  selected,
+  onSelect,
+}: {
+  id: string
+  label: string
+  value: string
+  count: number
+  selected: boolean
+  onSelect: () => void
+}): ReactNode {
   return (
-    <Link className="flow-node" to={href}>
+    <button type="button" className={`flow-node${selected ? ' is-on' : ''}`} onClick={onSelect}>
       <NodeIcon id={id} />
       <p>
         <b className={value === '수신 없음' ? 'is-empty' : ''}>{value}</b>
       </p>
-      <em>{matchedPoints(siteId, keys).length}개 관제점</em>
+      <em>{count}개 태그</em>
       <strong>{label}</strong>
-    </Link>
+    </button>
   )
 }
 
 export function PowerFlow({ site }: { site: SiteDef }) {
   const { search } = useScope()
-  const top = SERVICES.filter((item) => item.row === 'top')
-  const bottom = SERVICES.filter((item) => item.row === 'bottom')
+  const [layers, setLayers] = useState<TagLayer[]>(LAYERS.map((item) => item.id))
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const knownTags = peekSiteTags(site.id)
+  const [sensors, setSensors] = useState<SiteSensor[]>(() => knownTags?.sensors ?? [])
+  const [latest, setLatest] = useState<Map<string, SensorLatest>>(() => knownTags?.latest ?? new Map())
+  const [tagError, setTagError] = useState('')
+  const visible = SERVICES.filter((item) => item.layer === 'rest' || layers.includes(item.layer))
+  const top = visible.filter((item) => item.row === 'top')
+  const bottom = visible.filter((item) => item.row === 'bottom')
+  const selected = SERVICES.find((item) => item.id === selectedId) ?? null
   const photo = buildingPhoto(site)
+
+  useEffect(() => {
+    let cancelled = false
+    const known = peekSiteTags(site.id)
+    if (known) {
+      setSensors(known.sensors)
+      setLatest(known.latest)
+    }
+    async function loadList() {
+      try {
+        const list = await refreshSensors(site.id)
+        if (cancelled) return
+        setSensors(list)
+        setTagError('')
+      } catch (err) {
+        if (!cancelled && (peekSiteTags(site.id)?.sensors.length ?? 0) === 0) {
+          setTagError(err instanceof Error ? err.message : '태그 목록을 받지 못했습니다.')
+        }
+      }
+    }
+    async function loadValues() {
+      try {
+        const values = await refreshLatest(site.id)
+        if (!cancelled) setLatest(values)
+      } catch {
+        /* 최근 값이 늦어도 시설 이름은 남겨 둔다. */
+      }
+    }
+    void loadList()
+    void loadValues()
+    const timer = window.setInterval(() => void loadValues(), 30_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [site.id])
+
+  function toggleLayer(id: TagLayer) {
+    setLayers((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+    if (selected && selected.layer === id && layers.includes(id)) setSelectedId(null)
+  }
+
+  function tagsFor(layer: TagLayer | 'rest'): SiteSensor[] {
+    if (layer === 'rest') return []
+    return sensors.filter((item) => layerOf(item) === layer)
+  }
   const points = listPoints({ siteId: site.id })
   const live = points.filter((row) => {
     const tel = getTelemetry(row, 'live')
@@ -126,21 +229,74 @@ export function PowerFlow({ site }: { site: SiteDef }) {
           <div><dt>상태</dt><dd>{live.length > 0 ? '수신 중' : '수신 대기'}</dd></div>
         </dl>
       </section>
-      <section className="flow-board" aria-label="시설 관제">
-        <div className="flow-row is-top">
-          {top.map((item) => (
-            <Node key={item.id} siteId={site.id} id={item.id} label={item.label} keys={item.keys} href={serviceHref(site.id, item.path, search)} />
-          ))}
-        </div>
-        <svg className="flow-wires" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M100 0v28M300 0v28M500 0v28M700 0v28M900 0v28M100 28h800M160 62v28M380 62v28M620 62v28M840 62v28M160 62h680" />
-        </svg>
-        <div className="flow-row is-bottom">
-          {bottom.map((item) => (
-            <Node key={item.id} siteId={site.id} id={item.id} label={item.label} keys={item.keys} href={serviceHref(site.id, item.path, search)} />
-          ))}
-        </div>
-      </section>
+      <div className="flow-layers" role="group" aria-label="관제 층">
+        {LAYERS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={layers.includes(item.id) ? 'is-on' : ''}
+            aria-pressed={layers.includes(item.id)}
+            onClick={() => toggleLayer(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      {tagError ? <p className="manage-note">{tagError}</p> : null}
+      <div className="flow-stage">
+        <section className="flow-board" aria-label="시설 관제">
+          <div className="flow-row is-top">
+            {top.map((item) => {
+              const tags = item.layer === 'rest' ? [] : tagsFor(item.layer)
+              const received = tags.filter((tag) => latest.get(tag.id)?.value != null).length
+              return (
+                <Node
+                  key={item.id}
+                  id={item.id}
+                  label={item.label}
+                  value={tags.length === 0 ? '수신 없음' : `${received} 수신`}
+                  count={tags.length}
+                  selected={selectedId === item.id}
+                  onSelect={() => setSelectedId(item.id)}
+                />
+              )
+            })}
+          </div>
+          <svg className="flow-wires" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M100 0v28M300 0v28M500 0v28M700 0v28M900 0v28M100 28h800M160 62v28M380 62v28M620 62v28M840 62v28M160 62h680" />
+          </svg>
+          <div className="flow-row is-bottom">
+            {bottom.map((item) => {
+              const tags = item.layer === 'rest' ? [] : tagsFor(item.layer)
+              const received = tags.filter((tag) => latest.get(tag.id)?.value != null).length
+              return (
+                <Node
+                  key={item.id}
+                  id={item.id}
+                  label={item.label}
+                  value={tags.length === 0 ? '수신 없음' : `${received} 수신`}
+                  count={tags.length}
+                  selected={selectedId === item.id}
+                  onSelect={() => setSelectedId(item.id)}
+                />
+              )
+            })}
+          </div>
+        </section>
+        <aside className="flow-panel" aria-label="선택한 시설">
+          {selected ? (
+            <SelectedTags
+              label={selected.label}
+              href={serviceHref(site.id, selected.path, search)}
+              tags={selected.layer === 'rest' ? [] : tagsFor(selected.layer)}
+              latest={latest}
+              rest={selected.layer === 'rest'}
+            />
+          ) : (
+            <p>시설을 고르면 최근 값이 열립니다.</p>
+          )}
+        </aside>
+      </div>
       <section className="cmd-panel flow-points" aria-label="관제점">
         <h2>관제점</h2>
         {points.length === 0 ? <div className="empty">이 건물에 등록된 관제점이 없습니다.</div> : (
