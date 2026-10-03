@@ -265,3 +265,10 @@ scripts/_*.mjs
 scripts/_*.html
 /*.html
 !/index.html
+
+# Screenshots and spreadsheet dumps dropped at the repo root.
+/*.png
+/*.jpg
+/*.jpeg
+/*.xlsx
+/*.xls

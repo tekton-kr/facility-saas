@@ -236,16 +236,6 @@ function Hit({
   )
 }
 
-function Pipe({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
-  return <rect x={x} y={y} width={w} height={h} rx={Math.min(w, h) / 2} className="plant-pipe" />
-}
-
-function Chevron({ x, y, dir }: { x: number; y: number; dir: 'right' | 'down' | 'up' }) {
-  if (dir === 'right') return <polygon points={`${x},${y - 5} ${x + 9},${y} ${x},${y + 5}`} className="plant-chevron" />
-  if (dir === 'down') return <polygon points={`${x - 5},${y} ${x + 5},${y} ${x},${y + 9}`} className="plant-chevron" />
-  return <polygon points={`${x - 5},${y} ${x + 5},${y} ${x},${y - 9}`} className="plant-chevron" />
-}
-
 function DuctValue({
   x,
   y,
@@ -293,43 +283,40 @@ function AirLoop({
   return (
     <section className="plant-air" aria-label="공조 루프">
       <div className="plant-schematic">
-        <svg viewBox="0 0 940 340">
-          <Pipe x={36} y={112} w={274} h={26} />
-          <Pipe x={580} y={112} w={250} h={26} />
-          <Pipe x={804} y={138} w={26} h={96} />
-          <Pipe x={392} y={214} w={26} h={88} />
-          <Chevron x={286} y={125} dir="right" />
-          <Chevron x={790} y={125} dir="right" />
-          <Chevron x={817} y={214} dir="down" />
-          <Chevron x={405} y={228} dir="up" />
-          <g>
-            <rect x={310} y={56} width={270} height={158} rx={18} className="plant-body" />
-            <text x={445} y={80} textAnchor="middle" className="plant-duct-label" fontSize="13">공조기</text>
-            <rect x={330} y={96} width={58} height={78} rx={6} className="plant-coil" />
-            {[0, 1, 2, 3, 4].map((row) => (
-              <line key={row} x1={340} y1={110 + row * 14} x2={378} y2={110 + row * 14} className="plant-coil-line" />
-            ))}
-            <g className="plant-fan" transform="translate(500 132)">
-              <circle r={30} className="plant-fan-ring" />
-              <path d="M0 -6 C 12 -28 24 -20 6 -4" className="plant-fan-blade" />
-              <path d="M5 4 C 26 10 22 24 4 8" className="plant-fan-blade" />
-              <path d="M-5 4 C -18 22 -28 12 -8 2" className="plant-fan-blade" />
-              <circle r={4} className="plant-fan-hub" />
-            </g>
-            <Hit sensor={run} onOpen={onOpen}>
-              <rect x={390} y={168} width={110} height={36} fill="transparent" />
-              <text x={445} y={182} textAnchor="middle" className="plant-duct-label" fontSize="12">기동</text>
-              <text x={445} y={198} textAnchor="middle" className={runReading.received ? 'plant-value' : 'plant-value is-empty'} fontSize="13">
-                {runReading.text}
-              </text>
-              {runReading.received ? <circle cx={492} cy={194} r={3.5} className="plant-live-dot" /> : null}
-              {run ? <title>{run.name}</title> : null}
-            </Hit>
-          </g>
-          <DuctValue x={150} y={78} label="외기" sensor={air.get('oa')} latest={latest} mode="value" onOpen={onOpen} />
-          <DuctValue x={690} y={78} label="급기" sensor={air.get('sa')} latest={latest} mode="value" onOpen={onOpen} />
-          <DuctValue x={300} y={250} label="환기" sensor={air.get('ra')} latest={latest} mode="value" onOpen={onOpen} />
-          <DuctValue x={870} y={176} label="실내" sensor={air.get('room')} latest={latest} mode="value" onOpen={onOpen} />
+        <svg viewBox="0 0 1000 360">
+          <rect x="28" y="118" width="268" height="36" className="plant-duct-metal" />
+          <rect x="28" y="198" width="268" height="36" className="plant-duct-metal" />
+          <rect x="624" y="118" width="292" height="36" className="plant-duct-metal" />
+          <rect x="880" y="154" width="36" height="118" className="plant-duct-metal" />
+          <polygon points="246,130 258,136 246,142" className="plant-chevron" />
+          <polygon points="246,210 258,216 246,222" className="plant-chevron" />
+          <polygon points="860,130 872,136 860,142" className="plant-chevron" />
+          <polygon points="892,246 898,258 904,246" className="plant-chevron" />
+          <rect x="292" y="96" width="348" height="188" className="plant-case" />
+          <line x1="430" y1="96" x2="430" y2="284" className="plant-seam" />
+          <rect x="318" y="118" width="86" height="146" className="plant-coil" />
+          {Array.from({ length: 10 }, (_, index) => (
+            <line key={index} x1={328 + index * 7} y1="126" x2={328 + index * 7} y2="256" className="plant-fin" />
+          ))}
+          <path d="M470 196 a 46 46 0 1 1 62 -46 h 92 v 34 h -108 a 46 46 0 0 1 -46 12 z" className="plant-scroll" />
+          <circle cx="516" cy="186" r="7" className="plant-hub" />
+          <rect x="310" y="284" width="312" height="7" className="plant-skid" />
+          <rect x="324" y="291" width="22" height="8" className="plant-skid" />
+          <rect x="586" y="291" width="22" height="8" className="plant-skid" />
+          <Hit sensor={run} onOpen={onOpen}>
+            <rect x="470" y="232" width="120" height="40" fill="transparent" />
+            <text x="530" y="250" textAnchor="middle" className="plant-duct-label" fontSize="12">기동</text>
+            <text x="530" y="266" textAnchor="middle" className={runReading.received ? 'plant-value' : 'plant-value is-empty'} fontSize="13">
+              {runReading.text}
+            </text>
+            {runReading.received ? <circle cx="578" cy="262" r="3.5" className="plant-live-dot" /> : null}
+            {run ? <title>{run.name}</title> : null}
+          </Hit>
+          <text x="466" y="86" textAnchor="middle" className="plant-duct-label" fontSize="13">공조기</text>
+          <DuctValue x="150" y="86" label="외기" sensor={air.get('oa')} latest={latest} mode="value" onOpen={onOpen} />
+          <DuctValue x="150" y="268" label="환기" sensor={air.get('ra')} latest={latest} mode="value" onOpen={onOpen} />
+          <DuctValue x="760" y="86" label="급기" sensor={air.get('sa')} latest={latest} mode="value" onOpen={onOpen} />
+          <DuctValue x="898" y="300" label="실내" sensor={air.get('room')} latest={latest} mode="value" onOpen={onOpen} />
         </svg>
       </div>
       <p className="plant-caption">고정된 공조 루프입니다. 현장 배관도가 아닙니다. 외기·급기·환기·실내·기동 이름이 있는 태그만 숫자가 붙습니다.</p>

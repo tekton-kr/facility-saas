@@ -7675,31 +7675,48 @@ button.manage-row {
   color: #0f766e;
 }
 
-.plant-pipe {
-  fill: #d5e4ee;
-  stroke: #8eafc4;
-  stroke-width: 1.5;
+.plant-duct-metal {
+  fill: #d7e6f0;
+  stroke: #5d7c93;
+  stroke-width: 1.4;
 }
 
-.plant-chevron { fill: #3d6d8a; }
+.plant-case {
+  fill: #f7fafc;
+  stroke: #5d7c93;
+  stroke-width: 1.8;
+}
 
-.plant-body {
-  fill: #f8fbfd;
-  stroke: #c5d3df;
-  stroke-width: 2;
+.plant-seam {
+  fill: none;
+  stroke: #c5d5e2;
+  stroke-width: 1.2;
 }
 
 .plant-coil {
-  fill: #eef5f8;
-  stroke: #c5d3df;
+  fill: #eef4f8;
+  stroke: #8eafc4;
+  stroke-width: 1.2;
 }
 
-.plant-coil-line {
+.plant-fin {
   fill: none;
-  stroke: #8eafc4;
-  stroke-width: 1.4;
-  stroke-linecap: round;
+  stroke: #6d90a8;
+  stroke-width: 1.2;
 }
+
+.plant-scroll {
+  fill: #e4f0f6;
+  stroke: #3f6780;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.plant-hub { fill: #3f6780; }
+
+.plant-skid { fill: #c5d5e2; }
+
+.plant-chevron { fill: #3d6d8a; }
 
 .plant-duct-label {
   fill: #5c7388;
