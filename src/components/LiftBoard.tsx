@@ -1,13 +1,14 @@
-import type { EquipmentDef, SiteDef, SystemDef } from '../types/domain.ts'
+import type { EquipmentDef, PointDef, SiteDef, SystemDef } from '../types/domain.ts'
 import { getTelemetry } from '../lib/telemetry.ts'
 
-const FLOORS = ['RF', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', 'B1', 'B2']
+type Direction = 'up' | 'down' | 'none'
 
 type Car = {
   id: string
   name: string
   floor: string | null
-  direction: 'up' | 'down' | 'none'
+  direction: Direction
+  doorOpen: boolean
   fault: boolean
   sample: boolean
 }
@@ -18,41 +19,49 @@ function formatFloor(value: number): string {
   return String(Math.round(value))
 }
 
-function readFloor(siteId: string, system: SystemDef, equipment: EquipmentDef): { floor: string | null; direction: Car['direction']; fault: boolean } {
-  const point = equipment.points.find((item) => {
-    const hay = `${item.name} ${item.tags.join(' ')}`.toLowerCase()
-    return ['층', 'floor'].some((key) => hay.includes(key))
-  })
-  const faultPoint = equipment.points.find((item) => `${item.name}`.includes('고장'))
-  let fault = false
-  if (faultPoint) {
-    const tel = getTelemetry({ siteId, systemId: system.id, equipmentId: equipment.id, pointId: faultPoint.id }, 'live')
-    fault = tel.current != null && tel.current !== 0 && tel.certainty !== 'unknown' && tel.certainty !== 'estimate'
-  }
-  if (!point) return { floor: null, direction: 'none', fault }
+function liveValue(siteId: string, system: SystemDef, equipment: EquipmentDef, point: PointDef): number | null {
   const tel = getTelemetry({ siteId, systemId: system.id, equipmentId: equipment.id, pointId: point.id }, 'live')
-  if (tel.current == null || tel.certainty === 'unknown' || tel.certainty === 'estimate') {
-    return { floor: null, direction: 'none', fault }
-  }
+  if (tel.current == null || tel.certainty === 'unknown' || tel.certainty === 'estimate') return null
+  return tel.current
+}
+
+function isDoorName(name: string): boolean {
+  const hay = name.toLowerCase()
+  if (hay.includes('도어') || hay.includes('door')) return true
+  return hay.includes('문') && !hay.includes('문제')
+}
+
+function readCar(siteId: string, system: SystemDef, equipment: EquipmentDef): Pick<Car, 'floor' | 'direction' | 'doorOpen' | 'fault'> {
+  const floorPoint = equipment.points.find((item) => {
+    const hay = `${item.name} ${item.tags.join(' ')}`.toLowerCase()
+    return hay.includes('층') || hay.includes('floor')
+  })
+  const floorValue = floorPoint ? liveValue(siteId, system, equipment, floorPoint) : null
   const dirPoint = equipment.points.find((item) => {
-    const hay = `${item.name}`.toLowerCase()
+    const hay = item.name.toLowerCase()
     return hay.includes('방향') || hay.includes('상승') || hay.includes('하강')
   })
-  let direction: Car['direction'] = 'none'
-  if (dirPoint) {
-    const dir = getTelemetry({ siteId, systemId: system.id, equipmentId: equipment.id, pointId: dirPoint.id }, 'live')
-    if (dir.current === 1) direction = 'up'
-    if (dir.current === -1 || dir.current === 2) direction = 'down'
+  const dirValue = dirPoint ? liveValue(siteId, system, equipment, dirPoint) : null
+  let direction: Direction = 'none'
+  if (dirValue === 1) direction = 'up'
+  if (dirValue === -1 || dirValue === 2) direction = 'down'
+  const doorPoint = equipment.points.find((item) => isDoorName(item.name))
+  const doorValue = doorPoint ? liveValue(siteId, system, equipment, doorPoint) : null
+  const faultPoint = equipment.points.find((item) => item.name.includes('고장'))
+  const faultValue = faultPoint ? liveValue(siteId, system, equipment, faultPoint) : null
+  return {
+    floor: floorValue == null ? null : formatFloor(floorValue),
+    direction,
+    doorOpen: doorValue === 1,
+    fault: faultValue != null && faultValue !== 0,
   }
-  return { floor: formatFloor(tel.current), direction, fault }
 }
 
 function carsOf(site: SiteDef): Car[] {
   return site.systems.flatMap((system) => system.equipment.flatMap((equipment) => {
     const hay = `${equipment.name} ${equipment.tags.join(' ')} ${system.name}`.toLowerCase()
     if (!['엘리베이터', '승강', 'el'].some((key) => hay.includes(key))) return []
-    const live = readFloor(site.id, system, equipment)
-    return [{ id: `${system.id}-${equipment.id}`, name: equipment.name, sample: false, ...live }]
+    return [{ id: `${system.id}-${equipment.id}`, name: equipment.name, sample: false, ...readCar(site.id, system, equipment) }]
   }))
 }
 
@@ -62,33 +71,51 @@ function samples(): Car[] {
     name,
     floor: null,
     direction: 'none' as const,
+    doorOpen: false,
     fault: false,
     sample: true,
   }))
 }
 
-function Shaft({ car }: { car: Car }) {
+function floorRank(floor: string): number {
+  if (floor === 'RF') return 1000
+  if (floor.startsWith('B')) return -Number(floor.slice(1) || 1)
+  const level = Number(floor)
+  return Number.isFinite(level) ? level : 0
+}
+
+function scaleOf(floor: string | null): string[] {
+  const marks = new Set(['RF', '1', 'B2'])
+  if (floor) marks.add(floor)
+  return [...marks].sort((a, b) => floorRank(b) - floorRank(a))
+}
+
+function CarCard({ car }: { car: Car }) {
+  const marks = scaleOf(car.floor)
   return (
-    <article className={`lift-shaft${car.sample ? ' is-sample' : ''}`}>
+    <article className={`lift-car${car.sample ? ' is-sample' : ''}${car.fault ? ' is-fault' : ''}`}>
       <header>
-        <strong>{car.name}{car.sample ? <span className="sample-tag">예시</span> : null}</strong>
-        <em className={car.fault ? 'is-fault' : ''}>{car.fault ? '고장' : car.floor ? '정상' : '수신 없음'}</em>
+        <strong>{car.name}</strong>
+        {car.sample ? <span className="sample-tag">예시</span> : null}
+        {car.fault ? <em>고장</em> : null}
       </header>
-      <div className="lift-doors" aria-hidden="true"><i /><i /></div>
-      <ol>
-        {FLOORS.map((floor) => (
-          <li key={floor} className={car.floor === floor ? 'is-car' : ''}>
-            <span>{floor}</span>
-            {car.floor === floor ? (
-              <b>
-                {car.direction === 'up' ? '▲' : car.direction === 'down' ? '▼' : ''}
-                {floor}
-              </b>
-            ) : <b />}
-          </li>
-        ))}
-      </ol>
-      {car.floor ? null : <p>위치 수신 없음</p>}
+      <div className="lift-body">
+        <div className="lift-cabin">
+          <b className={car.floor ? '' : 'is-empty'}>{car.floor ?? '수신 없음'}</b>
+          <span>
+            {car.direction === 'up' ? <i aria-label="상승">▲</i> : null}
+            {car.direction === 'down' ? <i aria-label="하강">▼</i> : null}
+            {car.doorOpen ? <i className="lift-door" aria-label="문 열림" /> : null}
+          </span>
+        </div>
+        <ol className="lift-scale" aria-label={`${car.name} 위치`}>
+          {marks.map((floor) => (
+            <li key={floor} className={car.floor === floor ? 'is-car' : ''}>
+              <span>{floor}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </article>
   )
 }
@@ -99,7 +126,7 @@ export function LiftBoard({ site }: { site?: SiteDef }) {
   const sample = live.length === 0
 
   return (
-    <div className="cmd desk">
+    <div className="cmd desk lift-desk">
       <header className="cmd-head">
         <div>
           <p>{site?.name ?? '현장'}</p>
@@ -111,7 +138,7 @@ export function LiftBoard({ site }: { site?: SiteDef }) {
         </p>
       </header>
       <div className="lift-row">
-        {cars.map((car) => <Shaft key={car.id} car={car} />)}
+        {cars.map((car) => <CarCard key={car.id} car={car} />)}
       </div>
     </div>
   )

@@ -200,23 +200,23 @@ export function SiteTree({ open, onNavigate }: Props) {
         )}
       </nav>
       <footer className="tree-foot">
-        <p className="tree-contact">
-          <span>문의</span>
+        <div className="tree-contact">
+          <p>문의</p>
           <a href="mailto:rok@tekton.co.kr">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 7h16v10H4V7Z" />
               <path d="m4 7 8 6 8-6" />
             </svg>
-            rok@tekton.co.kr
+            <span>rok@tekton.co.kr</span>
           </a>
           <a href="tel:031-000-0000">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 4h3l1 4-2 1a12 12 0 0 0 5 5l1-2 4 1v3a2 2 0 0 1-2 2A14 14 0 0 1 6 6a2 2 0 0 1 2-2Z" />
             </svg>
-            031-000-0000
+            <span>031-000-0000</span>
           </a>
-        </p>
-        <p className="tree-copy">© 2026 TEKTON</p>
+          <p className="tree-copy">© 2026 TEKTON</p>
+        </div>
       </footer>
     </aside>
   )

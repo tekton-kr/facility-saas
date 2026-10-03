@@ -263,3 +263,5 @@ playwright/.cache/
 public/_*.html
 scripts/_*.mjs
 scripts/_*.html
+/*.html
+!/index.html
